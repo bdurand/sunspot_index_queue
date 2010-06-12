@@ -1,0 +1,9 @@
+= Sunspot Index Queue
+
+This gem provides support for asynchronously updating a Solr index with the sunspot gem.
+
+== Why asynchronous
+
+== Usage
+
+== Caveats
