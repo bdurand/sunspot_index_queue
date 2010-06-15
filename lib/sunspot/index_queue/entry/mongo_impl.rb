@@ -133,9 +133,9 @@ module Sunspot
           def add (klass, id, operation, priority)
             operation = operation.to_s.downcase[0, 1]
             queue_entry_key = {:record_id => id, :record_class_name => klass.name}
-            queue_entry = collection.find_one(queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
+            queue_entry = find_one(queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
             queue_entry.operation = operation
-            queue_entry.priority = priority if priority < queue_entry.priority
+            queue_entry.priority = priority if priority > queue_entry.priority
             queue_entry.index_at = Time.now.utc
             queue_entry.save
           end

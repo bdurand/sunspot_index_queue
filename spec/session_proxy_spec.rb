@@ -15,10 +15,10 @@ describe Sunspot::IndexQueue::SessionProxy do
     
     it "should use the default queue by default" do
       proxy = Sunspot::IndexQueue::SessionProxy.new
-      proxy.session.should == queue.session
+      proxy.queue.session == proxy.session
     end
     
-    it "should use the queue session by default" do
+    it "should use the queue's session by default" do
       proxy = Sunspot::IndexQueue::SessionProxy.new(queue)
       proxy.session.should == queue.session
       proxy.queue.should == queue

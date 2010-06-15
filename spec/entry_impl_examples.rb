@@ -111,7 +111,7 @@ shared_examples_for "Entry implementation" do
         entry = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new).detect{|e| e.priority == 100}
         entry.record_class_name.should == "Sunspot::IndexQueue::Test::Searchable"
         entry.record_id.should == "10"
-        entry.operation.should == "u"
+        entry.update?.should == true
         entry.priority.should == 100
       end
   
@@ -120,6 +120,17 @@ shared_examples_for "Entry implementation" do
         factory.find(@entry_1.id).should == nil
         factory.find(@entry_2.id).should == nil
         factory.find(@entry_4.id).id.should == @entry_4.id
+      end
+      
+      it "should not add multiple entries" do
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", :update, 100)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", :update, 110)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", :delete, 90)
+        entries = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new)
+        entries.detect{|e| e.priority == 100}.should == nil
+        entries.detect{|e| e.priority == 90}.should == nil
+        entry = entries.detect{|e| e.priority == 110}
+        entry.delete?.should == true
       end
     end
   end

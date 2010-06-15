@@ -43,7 +43,7 @@ module Sunspot
     # +:class_names+ - A list of class names that the queue will process. This can be used to have different
     # queues process different classes of records when they need to different configurations.
     #
-    # +:session+ - The Sunspot::Session object to use for communicating with Solr (defaults to Sunspot.session).
+    # +:session+ - The Sunspot::Session object to use for communicating with Solr (defaults to a session with the default config).
     def initialize (options = {})
       @retry_interval = options[:retry_interval] || 60
       @batch_size = options[:batch_size] || 100
@@ -53,7 +53,21 @@ module Sunspot
       elsif options[:class_names]
         @class_names << options[:class_names].to_s
       end
-      @session = options[:session] || Sunspot.session
+      @session = options[:session] || Sunspot::Session.new
+    end
+    
+    # Provide a block that will handle submitting batches of records. The block will take a Batch object and must call
+    # +submit!+ on it. This can be useful for doing things such as providing an identity map for records in the batch.
+    # Example:
+    #
+    #   # Use the ActiveRecord identity map for each batch submitted to reduce database activity.
+    #   queue.batch_handler do
+    #     ActiveRecord::Base.cache do |batch|
+    #       batch.submit!
+    #     end
+    #   end
+    def batch_handler (&block)
+      @batch_handler = block
     end
     
     # Add a record to be indexed to the queue. The record can be specified as either an indexable object or as
@@ -118,7 +132,11 @@ module Sunspot
           break if Entry.ready_count(self) == 0
         else
           batch = Batch.new(self, entries)
-          batch.submit!
+          if defined?(@batch_handler) && @batch_handler
+            @batch_handler.call(batch)
+          else
+            batch.submit!
+          end
         end
       end
     end

@@ -82,7 +82,7 @@ module Sunspot
             queue_entry_key = {:record_id => id, :record_class_name => klass.name, :lock => nil}
             queue_entry = first(:conditions => queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
             queue_entry.operation = operation
-            queue_entry.priority = priority if priority < queue_entry.priority
+            queue_entry.priority = priority if priority > queue_entry.priority
             queue_entry.index_at = Time.now.utc
             queue_entry.save!
           end

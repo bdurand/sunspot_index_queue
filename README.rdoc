@@ -90,7 +90,7 @@ This will process all entries currently in the queue. Of course, you'll probably
         queue.process
         sleep(2)
       rescue Exception => e
-        raise e if e.is_a?(SystemExit)
+        raise e if e.is_a?(SystemExit) || e.is_a?(Interrupt)
         Rails.logger.error(e)
       end
     end

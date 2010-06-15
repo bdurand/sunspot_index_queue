@@ -115,6 +115,21 @@ describe Sunspot::IndexQueue::Entry do
       lambda{ Sunspot::IndexQueue::Entry.enqueue(queue, Object, 1, :delete) }.should raise_error(ArgumentError)
     end
     
+    it "should load all records for an array of entries at once" do
+      entry_1 = Sunspot::IndexQueue::Entry.implementation.new(:record_class_name => "Sunspot::IndexQueue::Test::Searchable", :record_id => 1)
+      entry_2 = Sunspot::IndexQueue::Entry.implementation.new(:record_class_name => "Sunspot::IndexQueue::Test::Searchable", :record_id => 2)
+      entry_3 = Sunspot::IndexQueue::Entry.implementation.new(:record_class_name => "Sunspot::IndexQueue::Test::Searchable::Subclass", :record_id => 3)
+      Sunspot::IndexQueue::Entry.load_all_records([entry_1, entry_2, entry_3])
+      record_1 = entry_1.instance_variable_get(:@record)
+      record_1.should == Sunspot::IndexQueue::Test::Searchable.new("1")
+      entry_1.record.object_id.should == record_1.object_id
+      record_2 = entry_2.instance_variable_get(:@record)
+      record_2.should == Sunspot::IndexQueue::Test::Searchable.new("2")
+      entry_2.record.object_id.should == record_2.object_id
+      record_3 = entry_3.instance_variable_get(:@record)
+      record_3.should == Sunspot::IndexQueue::Test::Searchable::Subclass.new("3")
+      entry_3.record.object_id.should == record_3.object_id
+    end
   end
   
   context "instance methods" do

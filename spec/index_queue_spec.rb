@@ -105,6 +105,22 @@ describe Sunspot::IndexQueue do
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_3])
       queue.process
     end
+    
+    it "should process all entries in the queue and call a batch wrapper if defined" do
+      Sunspot::IndexQueue::Entry.should_receive(:next_batch!).with(queue).and_return([entry_1, entry_2], [entry_3], [])
+      Sunspot::IndexQueue::Entry::MockImpl.should_receive(:ready_count).with(queue).and_return(0)
+      queue.session.should_receive(:batch).twice.and_yield
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "1")
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "2")
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "3")
+      queue.session.should_receive(:commit).twice
+      Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_1, entry_2])
+      Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_3])
+      wrapper_count = 0
+      queue.batch_handler{|batch| wrapper_count += 1; batch.submit!}
+      queue.process
+      wrapper_count.should == 2
+    end
   end
   
   context "maintenance" do

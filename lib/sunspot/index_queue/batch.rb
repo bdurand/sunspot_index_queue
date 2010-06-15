@@ -15,6 +15,7 @@ module Sunspot
       # Otherwise, any entries that generated errors will be updated with the error messages and
       # set to be processed again in the future.
       def submit!
+        Entry.load_all_records(entries)
         begin
           # First try submitting the entries in a batch since that's the most efficient.
           # If there are errors, try each entry individually in case there's a bad document.

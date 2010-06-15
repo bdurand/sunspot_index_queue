@@ -99,6 +99,20 @@ module Sunspot
         def delete_entries (entries)
           implementation.delete_entries(entries)
         end
+        
+        # Load all records in an array of entries. This can be faster than calling load on each DataAccessor
+        # depending on them implementation
+        def load_all_records (entries)
+          classes = entries.collect{|entry| entry.record_class_name}.uniq.collect{|name| Sunspot::Util.full_const_get(name) rescue nil}.compact
+          map = entries.inject({}){|hash, entry| hash[entry.record_id.to_s] = entry; hash}
+          classes.each do |klass|
+            ids = entries.collect{|entry| entry.record_id}
+            Sunspot::Adapters::DataAccessor.create(klass).load_all(ids).each do |record|
+              entry = map[Sunspot::Adapters::InstanceAdapter.adapt(record).id.to_s]
+              entry.instance_variable_set(:@record, record) if entry
+            end
+          end
+        end
       end
       
       # Get the record represented by this entry.
