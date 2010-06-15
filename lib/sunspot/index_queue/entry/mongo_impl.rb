@@ -3,141 +3,272 @@ require 'mongo'
 module Sunspot
   class IndexQueue
     module Entry
-      # Implementation of an indexing queue backed by MongoDB (http://mongodb.org/).
+      # Implementation of an indexing queue backed by MongoDB (http://mongodb.org/). This implementation
+      # uses the mongo gem directly and so is independent of any ORM you may be using.
       #
       # To set it up, you need to set the connection and database that it will use.
       #
-      #   TODO example include instructions on Passenger
+      #   Sunspot::IndexQueue::Entry::MongoImpl.connection = 'localhost'
+      #   Sunspot::IndexQueue::Entry::MongoImpl.database = 'my_database'
+      #   # or
+      #   Sunspot::IndexQueue::Entry::MongoImpl.connection = Mongo::Connection.new('localhost', 27017)
+      #   Sunspot::IndexQueue::Entry::MongoImpl.database = 'my_database'
       class MongoImpl
         include Entry
 
-        UPDATE = 'u'
-        DELETE = 'd'
-
         class << self
+          # Set the connection to MongoDB. The args can either be a Mongo::Connection object, or the args
+          # that can be used to create a new Mongo::Connection.
           def connection= (*args)
             @connection = args.first.is_a?(Mongo::Connection) ? args.first : Mongo::Connection.new(*args)
           end
           
+          # Get the connection currently in use.
           def connection
             @connection
           end
           
+          # Set the name of the database which will contain the queue collection.
           def database_name= (name)
             @collection = nil
             @database_name = name
           end
           
+          # Get the collection used to store the queue.
           def collection
-            @collection ||= connection.db(@database_name)["sunspot_index_queue_entries"]
+            unless @collection
+              @collection = connection.db(@database_name)["sunspot_index_queue_entries"]
+              @collection.create_index([[:record_class_name, Mongo::ASCENDING], [:record_id, Mongo::ASCENDING]])
+              @collection.create_index([[:index_at, Mongo::ASCENDING], [:record_class_name, Mongo::ASCENDING], [:priority, Mongo::DESCENDING]])
+            end
+            @collection
           end
           
+          # Create a new entry.
+          def create (attributes)
+            entry = new(attributes)
+            entry.save
+            entry
+          end
+          
+          # Find one entry given a selector or object id.
+          def find_one (spec_or_object_id=nil, opts={})
+            doc = collection.find_one(spec_or_object_id, opts)
+            doc ? new(doc) : nil
+          end
+          
+          # Find an array of entries given a selector.
+          def find (selector={}, opts={})
+            collection.find(selector, opts).collect{|doc| new(doc)}
+          end
+          
+          # Logger used to log errors.
+          def logger
+            @logger
+          end
+          
+          # Set the logger used to log errors.
+          def logger= (logger)
+            @logger = logger
+          end
+          
+          # Implementation of the total_count method.
           def total_count (queue)
-            conditions = queue.class_names.empty? ? {} : {:record_class_name => queue.class_names}
-            find(conditions).count
+            conditions = queue.class_names.empty? ? {} : {:record_class_name => {'$in' => queue.class_names}}
+            collection.find(conditions).count
           end
           
+          # Implementation of the ready_count method.
           def ready_count (queue)
-            conditions = ["index_at <= ?", Time.now.utc]
+            conditions = {:index_at => {'$lte' => Time.now.utc}}
             unless queue.class_names.empty?
-              conditions.first << " AND record_class_name IN (?)"
-              conditions << queue.class_names
+              conditions[:record_class_name] = {'$in' => queue.class_names}
             end
-            count(:conditions => conditions)
+            collection.find(conditions).count
           end
 
+          # Implementation of the error_count method.
           def error_count (queue)
-            conditions = ["error IS NOT NULL"]
+            conditions = {:error => {'$ne' => nil}}
             unless queue.class_names.empty?
-              conditions.first << " AND record_class_name IN (?)"
-              conditions << queue.class_names
+              conditions[:record_class_name] = {'$in' => queue.class_names}
             end
-            count(:conditions => conditions)
+            collection.find(conditions).count
           end
 
-          def errors (queue)
-            conditions = ["error IS NOT NULL"]
+          # Implementation of the errors method.
+          def errors (queue, limit, offset)
+            conditions = {:error => {'$ne' => nil}}
             unless queue.class_names.empty?
-              conditions.first << " AND record_class_name IN (?)"
-              conditions << queue.class_names
+              conditions[:record_class_name] = {'$in' => queue.class_names}
             end
-            all(:conditions => conditions)
+            find(conditions, :limit => limit, :skip => offset, :sort => :id)
           end
 
+          # Implementation of the reset! method.
           def reset! (queue)
-            conditions = queue.class_names.empty? ? {} : {:record_class_name => queue.class_names}
-            update_all({:index_at => Time.now.utc, :attempts => 0, :error => nil, :lock => nil}, conditions)
+            conditions = queue.class_names.empty? ? {} : {:record_class_name => {'$in' => queue.class_names}}
+            collection.update(conditions, {"$set" => {:index_at => Time.now.utc, :attempts => 0, :error => nil}}, :multi => true)
           end
           
+          # Implementation of the next_batch! method.
           def next_batch! (queue)
-            conditions = ["index_at <= ?", Time.now.utc]
+            conditions = {:index_at => {'$lte' => Time.now.utc}}
             unless queue.class_names.empty?
-              conditions.first << " AND record_class_name IN (?)"
-              conditions << queue.class_names
+              conditions[:record_class_name] = {'$in' => queue.class_names}
             end
-            batch_entries = all(:select => "id", :conditions => ["index_at <= ?", Time.now.utc], :limit => queue.batch_size, :order => 'priority DESC, id')
-            queue_entry_ids = batch_entries.collect{|entry| entry.id}
-            lock = rand(0x7FFFFFFF)
-            update_all({:index_at => queue.retry_interval.from_now.utc, :lock => lock, :error => nil}, :id => queue_entry_ids) unless queue_entry_ids.empty?
-            entries = all(:conditions => {:id => queue_entry_ids, :lock => lock})
-            entries.sort! do |a, b|
-              cmp = b.priority <=> a.priority
-              cmp = a.id <=> b.id if cmp == 0
-              cmp
+            entries = []
+            while entries.size < queue.batch_size
+              begin
+                doc = collection.find_and_modify(:update => {"$set" => {:index_at => Time.now.utc + queue.retry_interval, :error => nil}}, :query => conditions, :limit => queue.batch_size, :sort => [[:priority, Mongo::DESCENDING], [:index_at, Mongo::ASCENDING]])
+                entries << new(doc)
+              rescue Mongo::OperationFailure
+                break
+              end
             end
             entries
           end
 
+          # Implementation of the add method.
           def add (klass, id, operation, priority)
             operation = operation.to_s.downcase[0, 1]
-            queue_entry_key = {:record_id => id, :record_class_name => klass.name, :lock => nil}
-            queue_entry = first(:conditions => queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
+            queue_entry_key = {:record_id => id, :record_class_name => klass.name}
+            queue_entry = collection.find_one(queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
             queue_entry.operation = operation
             queue_entry.priority = priority if priority < queue_entry.priority
             queue_entry.index_at = Time.now.utc
-            queue_entry.save!
+            queue_entry.save
           end
           
+          # Implementation of the delete_entries method.
           def delete_entries (ids)
-            delete_all(:id => ids)
+            collection.remove(:_id => {'$in' => ids})
           end
         end
-      
-        def record_class_name
-          self[:record_class_name]
-        end
-      
-        def record_id
-          self[:record_id]
+        
+        attr_reader :doc
+        
+        # Create a new entry from a document hash.
+        def initialize (attributes = {})
+          @doc = {}
+          attributes.each do |key, value|
+            @doc[key.to_s] = value
+          end
+          @doc['priority'] = 0 unless doc['priority']
+          @doc['attempts'] = 0 unless doc['attempts']
         end
         
-        def update?
-          self.operation == UPDATE
+        # Get the entry id.
+        def id
+          doc['_id']
+        end
+        
+        # Get the entry id.
+        def record_class_name
+          doc['record_class_name']
+        end
+        
+        # Set the entry record_class_name.
+        def record_class_name= (value)
+          doc['record_class_name'] =  value.nil? ? nil : value.to_s
+        end
+        
+        # Get the entry id.
+        def record_id
+          doc['record_id']
+        end
+        
+        # Set the entry record_id.
+        def record_id= (value)
+          doc['record_id'] =  value
+        end
+        
+        # Get the entry index_at time.
+        def index_at
+          doc['index_at']
+        end
+        
+        # Set the entry index_at time.
+        def index_at= (value)
+          value = Time.parse(value.to_s) unless value.nil? || value.is_a?(Time)
+          doc['index_at'] =  value.nil? ? nil : value.utc
+        end
+        
+        # Get the entry priority.
+        def priority
+          doc['priority']
+        end
+        
+        # Set the entry priority.
+        def priority= (value)
+          doc['priority'] =  value.to_i
+        end
+        
+        # Get the entry attempts.
+        def attempts
+          doc['attempts'] || 0
+        end
+        
+        # Set the entry attempts.
+        def attempts= (value)
+          doc['attempts'] =  value.to_i
+        end
+        
+        # Get the entry error.
+        def error
+          doc['error']
+        end
+        
+        # Set the entry error.
+        def error= (value)
+          doc['error'] =  value.nil? ? nil : value.to_s
+        end
+        
+        # Get the entry operation.
+        def operation
+          doc['operation']
+        end
+        
+        # Set the entry operation.
+        def operation= (value)
+          doc['operation'] =  value.to_s.downcase[0, 1]
+        end
+        
+        # Save the entry to the database.
+        def save
+          id = self.class.collection.save(doc)
+          doc['_id'] = id if id
         end
 
-        def delete?
-          self.operation == DELETE
-        end
-
+        # Implementation of the set_error! method.
         def set_error! (error, retry_interval = nil)
           self.attempts += 1
           self.index_at = (retry_interval * attempts).from_now.utc if retry_interval
           self.error = "#{error.class.name}: #{error.message}\n#{error.backtrace.join("\n")[0, 4000]}"
-          self.lock = nil
           begin
-            save!
+            save
           rescue => e
-            logger.warn(error)
-            logger.warn(e)
+            if self.class.logger
+              self.class.logger.warn(error)
+              self.class.logger.warn(e)
+            end
           end
         end
 
+        # Implementation of the reset! method.
         def reset!
           begin
-            update_attributes!(:attempts => 0, :error => nil, :lock => nil, :index_at => Time.now)
+            self.error = nil
+            self.attempts = 0
+            self.index_at = Time.now.utc
+            self.save
           rescue => e
-            logger.warn(e)
+            self.class.logger.warn(e) if self.class.logger
           end
+        end
+        
+        def == (value)
+          value.is_a?(self.class) && ((id && id == value.id) || (doc == value.doc))
         end
       end
     end

@@ -89,14 +89,20 @@ module Sunspot
       Entry.total_count(self)
     end
     
+    # Get the number of entries in the queue that are ready to be processed.
+    def ready_count
+      Entry.ready_count(self)
+    end
+    
     # Get the number of entries that have errors in the queue.
     def error_count
       Entry.error_count(self)
     end
     
-    # Get the entries in the queue that have errors.
-    def errors
-      Entry.errors(self)
+    # Get the entries in the queue that have errors. Supported options are +:limit+ (default 50) and +:offset+ (default 0).
+    def errors (options = {})
+      limit = options[:limit] ? options[:limit].to_i : 50
+      Entry.errors(self, limit, options[:offset].to_i)
     end
     
     # Reset all entries in the queue to clear errors and set them to be indexed immediately.

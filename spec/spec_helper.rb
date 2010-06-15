@@ -22,6 +22,10 @@ module Sunspot
           @id = id
         end
         
+        def == (value)
+          value.is_a?(self.class) && @id == value.id
+        end
+        
         class Subclass < Searchable
           def self.base_class
             Searchable

@@ -73,7 +73,7 @@ module Sunspot
           if entry.update?
             record = entry.record
             session.index(record) if record
-          else
+          elsif entry.delete?
             session.remove_by_id(entry.record_class_name, entry.record_id)
           end
         end

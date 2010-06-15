@@ -58,8 +58,8 @@ describe Sunspot::IndexQueue::Entry do
     end
     
     it "should proxy the errors method to the implementation" do
-      implementation.should_receive(:errors).with(queue).and_return([entry])
-      Sunspot::IndexQueue::Entry.errors(queue).should == [entry]
+      implementation.should_receive(:errors).with(queue, 2, 1).and_return([entry])
+      Sunspot::IndexQueue::Entry.errors(queue, 2, 1).should == [entry]
     end
     
     it "should proxy the reset! method to the implementation" do

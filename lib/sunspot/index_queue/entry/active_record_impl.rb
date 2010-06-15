@@ -19,66 +19,65 @@ module Sunspot
         
         set_table_name :sunspot_index_queue_entries
 
-        UPDATE = 'u'
-        DELETE = 'd'
-
         class << self
+          # Implementation of the total_count method.
           def total_count (queue)
             conditions = queue.class_names.empty? ? {} : {:record_class_name => queue.class_names}
             count(:conditions => conditions)
           end
           
+          # Implementation of the ready_count method.
           def ready_count (queue)
-            conditions = ["index_at <= ?", Time.now.utc]
+            conditions = ["#{connection.quote_column_name('index_at')} <= ?", Time.now.utc]
             unless queue.class_names.empty?
-              conditions.first << " AND record_class_name IN (?)"
+              conditions.first << " AND #{connection.quote_column_name('record_class_name')} IN (?)"
               conditions << queue.class_names
             end
             count(:conditions => conditions)
           end
 
+          # Implementation of the error_count method.
           def error_count (queue)
-            conditions = ["error IS NOT NULL"]
+            conditions = ["#{connection.quote_column_name('error')} IS NOT NULL"]
             unless queue.class_names.empty?
-              conditions.first << " AND record_class_name IN (?)"
+              conditions.first << " AND #{connection.quote_column_name('record_class_name')} IN (?)"
               conditions << queue.class_names
             end
             count(:conditions => conditions)
           end
 
-          def errors (queue)
-            conditions = ["error IS NOT NULL"]
+          # Implementation of the errors method.
+          def errors (queue, limit, offset)
+            conditions = ["#{connection.quote_column_name('error')} IS NOT NULL"]
             unless queue.class_names.empty?
-              conditions.first << " AND record_class_name IN (?)"
+              conditions.first << " AND #{connection.quote_column_name('record_class_name')} IN (?)"
               conditions << queue.class_names
             end
-            all(:conditions => conditions)
+            all(:conditions => conditions, :limit => limit, :offset => offset, :order => :id)
           end
 
+          # Implementation of the reset! method.
           def reset! (queue)
             conditions = queue.class_names.empty? ? {} : {:record_class_name => queue.class_names}
             update_all({:index_at => Time.now.utc, :attempts => 0, :error => nil, :lock => nil}, conditions)
           end
           
+          # Implementation of the next_batch! method.
           def next_batch! (queue)
-            conditions = ["index_at <= ?", Time.now.utc]
+            conditions = ["#{connection.quote_column_name('index_at')} <= ?", Time.now.utc]
             unless queue.class_names.empty?
-              conditions.first << " AND record_class_name IN (?)"
+              conditions.first << " AND #{connection.quote_column_name('record_class_name')} IN (?)"
               conditions << queue.class_names
             end
-            batch_entries = all(:select => "id", :conditions => ["index_at <= ?", Time.now.utc], :limit => queue.batch_size, :order => 'priority DESC, id')
+            batch_entries = all(:select => "id", :conditions => conditions, :limit => queue.batch_size, :order => 'priority DESC, index_at')
             queue_entry_ids = batch_entries.collect{|entry| entry.id}
+            return [] if queue_entry_ids.empty?
             lock = rand(0x7FFFFFFF)
-            update_all({:index_at => queue.retry_interval.from_now.utc, :lock => lock, :error => nil}, :id => queue_entry_ids) unless queue_entry_ids.empty?
-            entries = all(:conditions => {:id => queue_entry_ids, :lock => lock})
-            entries.sort! do |a, b|
-              cmp = b.priority <=> a.priority
-              cmp = a.id <=> b.id if cmp == 0
-              cmp
-            end
-            entries
+            update_all({:index_at => queue.retry_interval.from_now.utc, :lock => lock, :error => nil}, :id => queue_entry_ids)
+            all(:conditions => {:id => queue_entry_ids, :lock => lock})
           end
 
+          # Implementation of the add method.
           def add (klass, id, operation, priority)
             operation = operation.to_s.downcase[0, 1]
             queue_entry_key = {:record_id => id, :record_class_name => klass.name, :lock => nil}
@@ -89,10 +88,12 @@ module Sunspot
             queue_entry.save!
           end
           
+          # Implementation of the delete_entries method.
           def delete_entries (ids)
             delete_all(:id => ids)
           end
           
+          # Create the table used to store the queue in the database.
           def create_table
             connection.create_table table_name do |t|
               t.string :record_class_name, :null => false
@@ -109,23 +110,8 @@ module Sunspot
             connection.add_index table_name, [:index_at, :record_class_name, :priority], :name => "#{table_name}_index_at"
           end
         end
-      
-        def record_class_name
-          self[:record_class_name]
-        end
-      
-        def record_id
-          self[:record_id]
-        end
-        
-        def update?
-          self.operation == UPDATE
-        end
 
-        def delete?
-          self.operation == DELETE
-        end
-
+        # Implementation of the set_error! method.
         def set_error! (error, retry_interval = nil)
           self.attempts += 1
           self.index_at = (retry_interval * attempts).from_now.utc if retry_interval
@@ -139,9 +125,10 @@ module Sunspot
           end
         end
 
+        # Implementation of the reset! method.
         def reset!
           begin
-            update_attributes!(:attempts => 0, :error => nil, :lock => nil, :index_at => Time.now)
+            update_attributes!(:attempts => 0, :error => nil, :lock => nil, :index_at => Time.now.utc)
           rescue => e
             logger.warn(e)
           end

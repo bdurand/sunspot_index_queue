@@ -2,10 +2,17 @@ module Sunspot
   class IndexQueue
     # Abstract queue entry interface. All the gory details on actually handling the queue are handled by a
     # specific implementation class. The default implementation will use ActiveRecord as the backing queue.
+    #
+    # Implementing classes must define attribute readers for +id+, +record_class_name+, +record_id+, +error+,
+    # +attempts+, and +operation+.
     module Entry
       autoload :ActiveRecordImpl, File.expand_path('../entry/active_record_impl', __FILE__)
+      autoload :DataMapperImpl, File.expand_path('../entry/data_mapper_impl', __FILE__)
       autoload :MongoImpl, File.expand_path('../entry/mongo_impl', __FILE__)
       
+      UPDATE = 'u'
+      DELETE = 'd'
+
       class << self
         # Set the implementation class to use for the queue. This can be set as either a class object,
         # full class name, or a symbol representing one of the default implementations.
@@ -51,9 +58,9 @@ module Sunspot
           implementation.error_count(queue)
         end
         
-        # Get the error entries for an IndexQueue. Implementations must implement this method.
-        def errors (queue)
-          implementation.errors(queue)
+        # Get the specified number of error entries for an IndexQueue. Implementations must implement this method.
+        def errors (queue, limit, offset)
+          implementation.errors(queue, limit, offset)
         end
         
         # Get the next batch of entries to process for IndexQueue. Implementations must implement this method.
@@ -99,24 +106,14 @@ module Sunspot
         @record ||= Sunspot::Adapters::DataAccessor.create(Sunspot::Util.full_const_get(record_class_name)).load_all([record_id]).first
       end
       
-      # Get the record class name. Implementations must implement this method.
-      def record_class_name
-        raise NotImplementedError.new
-      end
-      
-      # Get the record id. Implementations must implement this method.
-      def record_id
-        raise NotImplementedError.new
-      end
-      
-      # True if this entry represents an update operation. Implementations must implement this method.
+      # +true+ if the operation is an update.
       def update?
-        raise NotImplementedError.new
+        self.operation.to_s.downcase[0, 1] == UPDATE
       end
 
-      # True if this entry represents a delete operation. Implementations must implement this method.
+      # +true+ if the operation is a delete.
       def delete?
-        raise NotImplementedError.new
+        self.operation.to_s.downcase[0, 1] == DELETE
       end
 
       # Set the error message on an entry. Implementations must implement this method.

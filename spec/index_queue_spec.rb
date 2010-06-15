@@ -114,6 +114,21 @@ describe Sunspot::IndexQueue do
       Sunspot::IndexQueue::Entry.should_receive(:reset!).with(queue)
       queue.reset!
     end
+    
+    it "should get the total number of entries in the queue" do
+      Sunspot::IndexQueue::Entry.should_receive(:total_count).with(queue).and_return(10)
+      queue.total_count.should == 10
+    end
+    
+    it "should get the number of entries in the queue ready to be processed" do
+      Sunspot::IndexQueue::Entry.should_receive(:ready_count).with(queue).and_return(10)
+      queue.ready_count.should == 10
+    end
+    
+    it "should get the number of entries with errors in the queue" do
+      Sunspot::IndexQueue::Entry.should_receive(:error_count).with(queue).and_return(10)
+      queue.error_count.should == 10
+    end
   end
   
 end
