@@ -27,9 +27,6 @@ module Sunspot
         end
         
         class Subclass < Searchable
-          def self.base_class
-            Searchable
-          end
         end
       end
       

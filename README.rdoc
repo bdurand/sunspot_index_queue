@@ -123,8 +123,3 @@ When you have updates coming from multiple sources, it is often good to set a pr
 When an entry in the queue cannot be sent to Solr, it will be automatically rescheduled to be tried again later. The amount of time is controlled by the +retry_interval+ setting on IndexQueue (defaults to 1 minute). Every time it is tried and fails, the interval will be increased yet again (i.e. first try wait 1 minute, second try wait 2 minutes, third try wait 3 minutes, etc.).
 
 Error messages and stack traces are stored with the queue entries so the can be debugged.
-
-
-== Caveats
-
-By updating your Solr index asynchronously, it will be eventually consistent, but could be temporarily out of sync with your data store. The biggest issue to watch out for is that your index could return results for objects that have already been deleted. Make sure that the Sunspot::Adapters::DataAccessor you are using accounts for nils (i.e. it shouldn't just blindly load objects and assume they will be there). Otherwise, you could end up with nil pointer exceptions in your application.

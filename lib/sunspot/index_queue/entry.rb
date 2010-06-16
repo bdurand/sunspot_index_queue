@@ -78,7 +78,6 @@ module Sunspot
         # Add multiple entries to the queue. +delete+ will be true if the entry is a delete.
         def enqueue (queue, klass, ids, delete, priority)
           klass = Sunspot::Util.full_const_get(klass.to_s) unless klass.is_a?(Class)
-          klass = klass.base_class if klass.respond_to?(:base_class)
           unless queue.class_names.empty? || queue.class_names.include?(klass.name)
             raise ArgumentError.new("Class #{klass.name} is not in the class names allowed for the queue")
           end

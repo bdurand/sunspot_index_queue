@@ -122,11 +122,15 @@ shared_examples_for "Entry implementation" do
         factory.find(@entry_4.id).id.should == @entry_4.id
       end
       
-      it "should not add multiple entries" do
+      it "should not add multiple entries unless a row is being processed" do
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 80)
+        Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new)
         Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 100)
         Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 110)
         Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", true, 90)
+        Sunspot::IndexQueue::Entry.implementation.reset!(Sunspot::IndexQueue.new)
         entries = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new)
+        entries.detect{|e| e.priority == 80}.record_id.should == "10"
         entries.detect{|e| e.priority == 100}.should == nil
         entries.detect{|e| e.priority == 90}.should == nil
         entry = entries.detect{|e| e.priority == 110}

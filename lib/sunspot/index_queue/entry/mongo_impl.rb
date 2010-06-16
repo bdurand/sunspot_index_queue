@@ -120,7 +120,8 @@ module Sunspot
             entries = []
             while entries.size < queue.batch_size
               begin
-                doc = collection.find_and_modify(:update => {"$set" => {:run_at => Time.now.utc + queue.retry_interval, :error => nil}}, :query => conditions, :limit => queue.batch_size, :sort => [[:priority, Mongo::DESCENDING], [:run_at, Mongo::ASCENDING]])
+                lock = rand(0x7FFFFFFF)
+                doc = collection.find_and_modify(:update => {"$set" => {:run_at => Time.now.utc + queue.retry_interval, :error => nil, :lock => lock}}, :query => conditions, :limit => queue.batch_size, :sort => [[:priority, Mongo::DESCENDING], [:run_at, Mongo::ASCENDING]])
                 entries << new(doc)
               rescue Mongo::OperationFailure
                 break
@@ -131,7 +132,7 @@ module Sunspot
 
           # Implementation of the add method.
           def add (klass, id, delete, priority)
-            queue_entry_key = {:record_id => id, :record_class_name => klass.name}
+            queue_entry_key = {:record_id => id, :record_class_name => klass.name, :lock => nil}
             queue_entry = find_one(queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
             queue_entry.is_delete = delete
             queue_entry.priority = priority if priority > queue_entry.priority
