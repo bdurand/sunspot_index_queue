@@ -21,6 +21,8 @@ Queueing the updates in the same datastore that is used for persisting your mode
 
 If you get a particularly large spike of updates to your indexed models, you could be taxing your Solr server with lots of single document updates. This could lead to downstream performance issues in your application. By queueing the Solr updates, they will be sent to the server in larger batches providing better performance. Furthermore, if Solr gets backed up updating the index, the slow down will be isolated to the background job processing the queue.
 
+This library uses a dedicated work queue for processing Solr requests instead of building off of delayed_job or another background processing library in order to take advantage of efficiently batching requests to Solr. This can give orders of magnitude better performance over indexing and committing individual documents.
+
 
 == Usage
 
