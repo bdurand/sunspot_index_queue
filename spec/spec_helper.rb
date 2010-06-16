@@ -51,15 +51,11 @@ module Sunspot
             @record_class_name = options[:record_class_name]
             @record_id = options[:record_id].to_s
           end
-          @operation = options[:operation] || :update
+          @is_delete = !!options[:delete]
         end
         
-        def update?
-          @operation == :update
-        end
-        
-        def delete?
-          @operation == :delete
+        def is_delete?
+          @is_delete
         end
         
         def id

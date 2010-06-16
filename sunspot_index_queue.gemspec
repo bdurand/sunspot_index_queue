@@ -16,7 +16,8 @@ Gem::Specification.new do |s|
     "README.rdoc"
   ]
   s.files = [
-    "MIT_LICENSE",
+    ".gitignore",
+     "MIT_LICENSE",
      "README.rdoc",
      "Rakefile",
      "VERSION",
@@ -37,10 +38,11 @@ Gem::Specification.new do |s|
      "spec/integration_spec.rb",
      "spec/mongo_impl_spec.rb",
      "spec/session_proxy_spec.rb",
-     "spec/spec_helper.rb"
+     "spec/spec_helper.rb",
+     "sunspot_index_queue.gemspec"
   ]
   s.homepage = %q{http://github.com/bdurand/sunspot_index_queue}
-  s.rdoc_options = ["--charset=UTF-8"]
+  s.rdoc_options = ["--charset=UTF-8", "--main", "README.rdoc"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Asynchronous Solr indexing support for the sunspot gem with an emphasis on reliablity and throughput.}

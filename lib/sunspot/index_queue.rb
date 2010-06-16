@@ -75,7 +75,7 @@ module Sunspot
     # (defaults to 0).
     def index (record_or_hash, options = {})
       klass, id = class_and_id(record_or_hash)
-      Entry.enqueue(self, klass, id, :update, options[:priority] || self.class.default_priority)
+      Entry.enqueue(self, klass, id, false, options[:priority] || self.class.default_priority)
     end
     
     # Add a record to be removed to the queue. The record can be specified as either an indexable object or as
@@ -83,19 +83,19 @@ module Sunspot
     # (defaults to 0).
     def remove (record_or_hash, options = {})
       klass, id = class_and_id(record_or_hash)
-      Entry.enqueue(self, klass, id, :delete, options[:priority] || self.class.default_priority)
+      Entry.enqueue(self, klass, id, true, options[:priority] || self.class.default_priority)
     end
 
     # Add a list of records to be indexed to the queue. The priority to be indexed can be passed in the
     # options as +:priority+ (defaults to 0).
     def index_all (klass, ids, options = {})
-      Entry.enqueue(self, klass, ids, :update, options[:priority] || self.class.default_priority)
+      Entry.enqueue(self, klass, ids, false, options[:priority] || self.class.default_priority)
     end
 
     # Add a list of records to be removed to the queue. The priority to be indexed can be passed in the
     # options as +:priority+ (defaults to 0).
     def remove_all (klass, ids, options = {})
-      Entry.enqueue(self, klass, ids, :delete, options[:priority] || self.class.default_priority)
+      Entry.enqueue(self, klass, ids, true, options[:priority] || self.class.default_priority)
     end
     
     # Get the number of entries to be processed in the queue.

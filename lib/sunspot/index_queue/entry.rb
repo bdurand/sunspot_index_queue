@@ -4,14 +4,11 @@ module Sunspot
     # specific implementation class. The default implementation will use ActiveRecord as the backing queue.
     #
     # Implementing classes must define attribute readers for +id+, +record_class_name+, +record_id+, +error+,
-    # +attempts+, and +operation+.
+    # +attempts+, and +is_delete?+.
     module Entry
       autoload :ActiveRecordImpl, File.expand_path('../entry/active_record_impl', __FILE__)
       autoload :DataMapperImpl, File.expand_path('../entry/data_mapper_impl', __FILE__)
       autoload :MongoImpl, File.expand_path('../entry/mongo_impl', __FILE__)
-      
-      UPDATE = 'u'
-      DELETE = 'd'
 
       class << self
         # Set the implementation class to use for the queue. This can be set as either a class object,
@@ -73,13 +70,13 @@ module Sunspot
           implementation.reset!(queue)
         end
         
-        # Add an entry the queue. The operation will be either +:update+ or +:delete+. Implementations must implement this method.
-        def add (klass, id, operation, options = {})
+        # Add an entry the queue. +is_delete+ will be true if the entry is a delete. Implementations must implement this method.
+        def add (klass, id, delete, options = {})
           raise NotImplementedError.new
         end
         
-        # Add multiple entries to the queue. The operation will be either +:update+ or +:delete+.
-        def enqueue (queue, klass, ids, operation, priority)
+        # Add multiple entries to the queue. +delete+ will be true if the entry is a delete.
+        def enqueue (queue, klass, ids, delete, priority)
           klass = Sunspot::Util.full_const_get(klass.to_s) unless klass.is_a?(Class)
           klass = klass.base_class if klass.respond_to?(:base_class)
           unless queue.class_names.empty? || queue.class_names.include?(klass.name)
@@ -88,10 +85,10 @@ module Sunspot
           priority = priority.to_i
           if ids.is_a?(Array)
             ids.each do |id|
-              implementation.add(klass, id, operation, priority)
+              implementation.add(klass, id, delete, priority)
             end
           else
-            implementation.add(klass, ids, operation, priority)
+            implementation.add(klass, ids, delete, priority)
           end
         end
         
@@ -118,16 +115,6 @@ module Sunspot
       # Get the record represented by this entry.
       def record
         @record ||= Sunspot::Adapters::DataAccessor.create(Sunspot::Util.full_const_get(record_class_name)).load_all([record_id]).first
-      end
-      
-      # +true+ if the operation is an update.
-      def update?
-        self.operation.to_s.downcase[0, 1] == UPDATE
-      end
-
-      # +true+ if the operation is a delete.
-      def delete?
-        self.operation.to_s.downcase[0, 1] == DELETE
       end
 
       # Set the error message on an entry. Implementations must implement this method.

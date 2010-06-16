@@ -21,11 +21,11 @@ module Sunspot
         
         storage_names[:default] = "sunspot_index_queue_entries"
         property :id, Serial
-        property :index_at, Time, :index => :index_at
-        property :record_class_name, String, :index => [:record, :index_at]
+        property :run_at, Time, :index => :run_at
+        property :record_class_name, String, :index => [:record, :run_at]
         property :record_id, String, :index => [:record]
-        property :priority, Integer, :default => 0, :index => :index_at
-        property :operation, String
+        property :priority, Integer, :default => 0, :index => :run_at
+        property :is_delete, Boolean
         property :lock, Integer
         property :error, String
         property :attempts, Integer, :default => 0
@@ -39,7 +39,7 @@ module Sunspot
           
           # Implementation of the ready_count method.
           def ready_count (queue)
-            conditions = {:index_at.lte => Time.now.utc}
+            conditions = {:run_at.lte => Time.now.utc}
             conditions[:record_class_name] = queue.class_names unless queue.class_names.empty?
             count(conditions)
           end
@@ -61,29 +61,28 @@ module Sunspot
           # Implementation of the reset! method.
           def reset! (queue)
             conditions = queue.class_names.empty? ? {} : {:record_class_name => queue.class_names}
-            all(conditions).update!(:index_at => Time.now.utc, :attempts => 0, :error => nil, :lock => nil)
+            all(conditions).update!(:run_at => Time.now.utc, :attempts => 0, :error => nil, :lock => nil)
           end
           
           # Implementation of the next_batch! method.
           def next_batch! (queue)
-            conditions = {:index_at.lte => Time.now.utc}
+            conditions = {:run_at.lte => Time.now.utc}
             conditions[:record_class_name] = queue.class_names unless queue.class_names.empty?
-            batch_entries = all(conditions.merge(:fields => [:id], :limit => queue.batch_size, :order => [:priority.desc, :index_at]))
+            batch_entries = all(conditions.merge(:fields => [:id], :limit => queue.batch_size, :order => [:priority.desc, :run_at]))
             queue_entry_ids = batch_entries.collect{|entry| entry.id}
             return [] if queue_entry_ids.empty?
             lock = rand(0x7FFFFFFF)
-            all(:id => queue_entry_ids).update!(:index_at => Time.now.utc + queue.retry_interval, :lock => lock, :error => nil)
+            all(:id => queue_entry_ids).update!(:run_at => Time.now.utc + queue.retry_interval, :lock => lock, :error => nil)
             all(:id => queue_entry_ids, :lock => lock)
           end
 
           # Implementation of the add method.
-          def add (klass, id, operation, priority)
-            operation = operation.to_s.downcase[0, 1]
+          def add (klass, id, delete, priority)
             queue_entry_key = {:record_id => id, :record_class_name => klass.name, :lock => nil}
             queue_entry = first(:conditions => queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
-            queue_entry.operation = operation
+            queue_entry.is_delete = delete
             queue_entry.priority = priority if priority > queue_entry.priority
-            queue_entry.index_at = Time.now.utc
+            queue_entry.run_at = Time.now.utc
             queue_entry.save!
           end
           
@@ -96,7 +95,7 @@ module Sunspot
         # Implementation of the set_error! method.
         def set_error! (error, retry_interval = nil)
           self.attempts += 1
-          self.index_at = Time.now.utc + (retry_interval * attempts) if retry_interval
+          self.run_at = Time.now.utc + (retry_interval * attempts) if retry_interval
           self.error = "#{error.class.name}: #{error.message}\n#{error.backtrace.join("\n")[0, 4000]}"
           self.lock = nil
           begin
@@ -110,7 +109,7 @@ module Sunspot
         # Implementation of the reset! method.
         def reset!
           begin
-            update!(:attempts => 0, :error => nil, :lock => nil, :index_at => Time.now.utc)
+            update!(:attempts => 0, :error => nil, :lock => nil, :run_at => Time.now.utc)
           rescue => e
             DataMapper.logger.warn(e)
           end

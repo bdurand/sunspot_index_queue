@@ -34,6 +34,7 @@ begin
     gem.email = "brian@embellishedvisions.com"
     gem.homepage = "http://github.com/bdurand/sunspot_index_queue"
     gem.authors = ["Brian Durand"]
+    gem.rdoc_options = ["--charset=UTF-8", "--main", "README.rdoc"]
     
     gem.add_dependency('sunspot', '>= 1.1.0')
     gem.add_development_dependency('sqlite3')

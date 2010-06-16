@@ -11,13 +11,13 @@ shared_examples_for "Entry implementation" do
   context "class methods" do
     before :each do
       test_class = "Sunspot::IndexQueue::Test::Searchable"
-      @entry_1 = factory.create('record_class_name' => test_class, 'record_id' => '1', 'operation' => 'u', 'priority' => 0, 'index_at' => Time.now.utc)
-      @entry_2 = factory.create('record_class_name' => test_class, 'record_id' => '2', 'operation' => 'u', 'priority' => 10, 'index_at' => Time.now.utc, 'error' => "boom!", 'attempts' => 1)
-      @entry_3 = factory.create('record_class_name' => "Object", 'record_id' => '3', 'operation' => 'u', 'priority' => 5, 'index_at' => Time.now.utc, 'error' => "boom!", 'attempts' => 1)
-      @entry_4 = factory.create('record_class_name' => test_class, 'record_id' => '4', 'operation' => 'd', 'priority' => 0, 'index_at' => Time.now.utc + 60)
-      @entry_5 = factory.create('record_class_name' => test_class, 'record_id' => '5', 'operation' => 'u', 'priority' => -10, 'index_at' => Time.now.utc - 60)
-      @entry_6 = factory.create('record_class_name' => test_class, 'record_id' => '6', 'operation' => 'u', 'priority' => 0, 'index_at' => Time.now.utc - 3600)
-      @entry_7 = factory.create('record_class_name' => test_class, 'record_id' => '7', 'operation' => 'd', 'priority' => 10, 'index_at' => Time.now.utc - 60)
+      @entry_1 = factory.create('record_class_name' => test_class, 'record_id' => '1', 'is_delete' => false, 'priority' => 0, 'run_at' => Time.now.utc)
+      @entry_2 = factory.create('record_class_name' => test_class, 'record_id' => '2', 'is_delete' => false, 'priority' => 10, 'run_at' => Time.now.utc, 'error' => "boom!", 'attempts' => 1)
+      @entry_3 = factory.create('record_class_name' => "Object", 'record_id' => '3', 'is_delete' => false, 'priority' => 5, 'run_at' => Time.now.utc, 'error' => "boom!", 'attempts' => 1)
+      @entry_4 = factory.create('record_class_name' => test_class, 'record_id' => '4', 'is_delete' => true, 'priority' => 0, 'run_at' => Time.now.utc + 60)
+      @entry_5 = factory.create('record_class_name' => test_class, 'record_id' => '5', 'is_delete' => false, 'priority' => -10, 'run_at' => Time.now.utc - 60)
+      @entry_6 = factory.create('record_class_name' => test_class, 'record_id' => '6', 'is_delete' => false, 'priority' => 0, 'run_at' => Time.now.utc - 3600)
+      @entry_7 = factory.create('record_class_name' => test_class, 'record_id' => '7', 'is_delete' => true, 'priority' => 10, 'run_at' => Time.now.utc - 60)
     end
     
     context "without class_names filter" do
@@ -107,11 +107,11 @@ shared_examples_for "Entry implementation" do
     
     context "add and remove" do
       it "should add an entry" do
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", :update, 100)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 100)
         entry = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new).detect{|e| e.priority == 100}
         entry.record_class_name.should == "Sunspot::IndexQueue::Test::Searchable"
         entry.record_id.should == "10"
-        entry.update?.should == true
+        entry.is_delete?.should == false
         entry.priority.should == 100
       end
   
@@ -123,14 +123,14 @@ shared_examples_for "Entry implementation" do
       end
       
       it "should not add multiple entries" do
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", :update, 100)
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", :update, 110)
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", :delete, 90)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 100)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 110)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", true, 90)
         entries = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new)
         entries.detect{|e| e.priority == 100}.should == nil
         entries.detect{|e| e.priority == 90}.should == nil
         entry = entries.detect{|e| e.priority == 110}
-        entry.delete?.should == true
+        entry.is_delete?.should == true
       end
     end
   end
@@ -147,20 +147,15 @@ shared_examples_for "Entry implementation" do
       entry.record_id.should == "1"
     end
   
-    it "should determine if the entry is an update" do
-      entry = Sunspot::IndexQueue::Entry.implementation.new('operation' => 'u')
-      entry.update?.should == true
-      entry.delete?.should == false
-    end
-  
-    it "should determine if the entry is a delete" do
-      entry = Sunspot::IndexQueue::Entry.implementation.new('operation' => 'd')
-      entry.delete?.should == true
-      entry.update?.should == false
+    it "should determine if the entry is an delete" do
+      entry = Sunspot::IndexQueue::Entry.implementation.new('is_delete' => false)
+      entry.is_delete?.should == false
+      entry = Sunspot::IndexQueue::Entry.implementation.new('is_delete' => true)
+      entry.is_delete?.should == true
     end
   
     it "should reset an entry to be indexed immediately" do
-      entry = factory.create('record_class_name' => "Test", 'record_id' => 1, 'operation' => 'u', 'priority' => 10, 'index_at' => Time.now.utc + 600, 'error' => "boom!", 'attempts' => 2)
+      entry = factory.create('record_class_name' => "Test", 'record_id' => 1, 'is_delete' => false, 'priority' => 10, 'run_at' => Time.now.utc + 600, 'error' => "boom!", 'attempts' => 2)
       queue = Sunspot::IndexQueue.new
       queue.error_count.should == 1
       queue.ready_count.should == 0
@@ -171,7 +166,7 @@ shared_examples_for "Entry implementation" do
     end
   
     it "should set the error on an entry" do
-      entry = factory.create('record_class_name' => "Test", 'record_id' => 1, 'operation' => 'u', 'priority' => 10, 'index_at' => Time.now.utc + 600, 'attempts' => 1)
+      entry = factory.create('record_class_name' => "Test", 'record_id' => 1, 'is_delete' => false, 'priority' => 10, 'run_at' => Time.now.utc + 600, 'attempts' => 1)
       error = ArgumentError.new("boom")
       error.stub!(:backtrace).and_return(["line 1", "line 2"])
       entry.set_error!(error)

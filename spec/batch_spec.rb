@@ -11,8 +11,8 @@ describe Sunspot::IndexQueue::Batch do
   end
   
   subject { Sunspot::IndexQueue::Batch.new(queue, [entry_1, entry_2]) }
-  let(:entry_1) { Sunspot::IndexQueue::Entry::MockImpl.new(:record => record_1, :operation => :update) }
-  let(:entry_2) { Sunspot::IndexQueue::Entry::MockImpl.new(:record => record_2, :operation => :delete) }
+  let(:entry_1) { Sunspot::IndexQueue::Entry::MockImpl.new(:record => record_1, :delete => false) }
+  let(:entry_2) { Sunspot::IndexQueue::Entry::MockImpl.new(:record => record_2, :delete => true) }
   let(:record_1) { Sunspot::IndexQueue::Test::Searchable.new(1) }
   let(:record_2) { Sunspot::IndexQueue::Test::Searchable.new(2) }
   let(:queue) { Sunspot::IndexQueue.new(:session => session) }

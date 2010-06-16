@@ -102,36 +102,36 @@ describe Sunspot::IndexQueue::SessionProxy do
     end
     
     it "should queue up objects being indexed" do
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :update, 0)
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, :update, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, false, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, false, 0)
       subject.index(Sunspot::IndexQueue::Test::Searchable.new(1), [Sunspot::IndexQueue::Test::Searchable.new(2)])
     end
     
     it "should queue up objects being indexed and committed" do
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :update, 0)
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, :update, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, false, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, false, 0)
       subject.index!(Sunspot::IndexQueue::Test::Searchable.new(1), [Sunspot::IndexQueue::Test::Searchable.new(2)])
     end
     
     it "should queue up objects being removed" do
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :delete, 0)
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, :delete, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, true, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, true, 0)
       subject.remove(Sunspot::IndexQueue::Test::Searchable.new(1), [Sunspot::IndexQueue::Test::Searchable.new(2)])
     end
     
     it "should queue up objects being removed and committed" do
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :delete, 0)
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, :delete, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, true, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, true, 0)
       subject.remove!(Sunspot::IndexQueue::Test::Searchable.new(1), [Sunspot::IndexQueue::Test::Searchable.new(2)])
     end
     
     it "should queue up objects being removed by id" do
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :delete, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, true, 0)
       subject.remove_by_id(Sunspot::IndexQueue::Test::Searchable, 1)
     end
     
     it "should queue up objects being removed by id and committed" do
-      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :delete, 0)
+      Sunspot::IndexQueue::Entry.implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, true, 0)
       subject.remove_by_id(Sunspot::IndexQueue::Test::Searchable, 1)
     end
     

@@ -71,11 +71,11 @@ module Sunspot
       # Send an entry to Solr doing an update or delete as necessary.
       def submit_entry (entry)
         log_entry_error(entry) do
-          if entry.update?
+          if entry.is_delete?
+            session.remove_by_id(entry.record_class_name, entry.record_id)
+          else
             record = entry.record
             session.index(record) if record
-          elsif entry.delete?
-            session.remove_by_id(entry.record_class_name, entry.record_id)
           end
         end
       end

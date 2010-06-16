@@ -28,7 +28,7 @@ module Sunspot
           
           # Implementation of the ready_count method.
           def ready_count (queue)
-            conditions = ["#{connection.quote_column_name('index_at')} <= ?", Time.now.utc]
+            conditions = ["#{connection.quote_column_name('run_at')} <= ?", Time.now.utc]
             unless queue.class_names.empty?
               conditions.first << " AND #{connection.quote_column_name('record_class_name')} IN (?)"
               conditions << queue.class_names
@@ -59,32 +59,31 @@ module Sunspot
           # Implementation of the reset! method.
           def reset! (queue)
             conditions = queue.class_names.empty? ? {} : {:record_class_name => queue.class_names}
-            update_all({:index_at => Time.now.utc, :attempts => 0, :error => nil, :lock => nil}, conditions)
+            update_all({:run_at => Time.now.utc, :attempts => 0, :error => nil, :lock => nil}, conditions)
           end
           
           # Implementation of the next_batch! method.
           def next_batch! (queue)
-            conditions = ["#{connection.quote_column_name('index_at')} <= ?", Time.now.utc]
+            conditions = ["#{connection.quote_column_name('run_at')} <= ?", Time.now.utc]
             unless queue.class_names.empty?
               conditions.first << " AND #{connection.quote_column_name('record_class_name')} IN (?)"
               conditions << queue.class_names
             end
-            batch_entries = all(:select => "id", :conditions => conditions, :limit => queue.batch_size, :order => 'priority DESC, index_at')
+            batch_entries = all(:select => "id", :conditions => conditions, :limit => queue.batch_size, :order => 'priority DESC, run_at')
             queue_entry_ids = batch_entries.collect{|entry| entry.id}
             return [] if queue_entry_ids.empty?
             lock = rand(0x7FFFFFFF)
-            update_all({:index_at => queue.retry_interval.from_now.utc, :lock => lock, :error => nil}, :id => queue_entry_ids)
+            update_all({:run_at => queue.retry_interval.from_now.utc, :lock => lock, :error => nil}, :id => queue_entry_ids)
             all(:conditions => {:id => queue_entry_ids, :lock => lock})
           end
 
           # Implementation of the add method.
-          def add (klass, id, operation, priority)
-            operation = operation.to_s.downcase[0, 1]
+          def add (klass, id, delete, priority)
             queue_entry_key = {:record_id => id, :record_class_name => klass.name, :lock => nil}
             queue_entry = first(:conditions => queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
-            queue_entry.operation = operation
+            queue_entry.is_delete = delete
             queue_entry.priority = priority if priority > queue_entry.priority
-            queue_entry.index_at = Time.now.utc
+            queue_entry.run_at = Time.now.utc
             queue_entry.save!
           end
           
@@ -98,8 +97,8 @@ module Sunspot
             connection.create_table table_name do |t|
               t.string :record_class_name, :null => false
               t.string :record_id, :null => false
-              t.string :operation, :null => false, :limit => 1
-              t.datetime :index_at, :null => false
+              t.boolean :is_delete, :null => false, :default => false
+              t.datetime :run_at, :null => false
               t.integer :priority, :null => false, :default => 0
               t.integer :lock, :null => true
               t.string :error, :null => true, :limit => 4000
@@ -107,14 +106,14 @@ module Sunspot
             end
 
             connection.add_index table_name, [:record_class_name, :record_id], :name => "#{table_name}_record"
-            connection.add_index table_name, [:index_at, :record_class_name, :priority], :name => "#{table_name}_index_at"
+            connection.add_index table_name, [:run_at, :record_class_name, :priority], :name => "#{table_name}_run_at"
           end
         end
 
         # Implementation of the set_error! method.
         def set_error! (error, retry_interval = nil)
           self.attempts += 1
-          self.index_at = (retry_interval * attempts).from_now.utc if retry_interval
+          self.run_at = (retry_interval * attempts).from_now.utc if retry_interval
           self.error = "#{error.class.name}: #{error.message}\n#{error.backtrace.join("\n")[0, 4000]}"
           self.lock = nil
           begin
@@ -128,7 +127,7 @@ module Sunspot
         # Implementation of the reset! method.
         def reset!
           begin
-            update_attributes!(:attempts => 0, :error => nil, :lock => nil, :index_at => Time.now.utc)
+            update_attributes!(:attempts => 0, :error => nil, :lock => nil, :run_at => Time.now.utc)
           rescue => e
             logger.warn(e)
           end

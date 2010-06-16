@@ -86,33 +86,33 @@ describe Sunspot::IndexQueue::Entry do
     let(:queue) { Sunspot::IndexQueue.new }
     
     it "should add an entry to the implementation" do
-      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :update, 2)
-      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable, 1, :update, 2)
+      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, false, 2)
+      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable, 1, false, 2)
     end
     
     it "should add an entry to the implementation given a class name" do
-      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :update, 2)
-      Sunspot::IndexQueue::Entry.enqueue(queue, "Sunspot::IndexQueue::Test::Searchable", 1, :update, 2)
+      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, false, 2)
+      Sunspot::IndexQueue::Entry.enqueue(queue, "Sunspot::IndexQueue::Test::Searchable", 1, false, 2)
     end
     
     it "should add an entry to the implementation for a base class if it exists" do
-      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :update, 2)
-      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable::Subclass, 1, :update, 2)
+      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, false, 2)
+      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable::Subclass, 1, false, 2)
     end
         
     it "should add multiple entries to the implementation" do
-      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :update, 2)
-      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, :update, 2)
-      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable, [1, 2], :update, 2)
+      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, false, 2)
+      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, false, 2)
+      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable, [1, 2], false, 2)
     end
     
     it "should not an entry for an object to the implementation" do
       queue.class_names << "Sunspot::IndexQueue::Test::Searchable"
-      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, :delete, 0)
-      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable, 1, :delete, 0)
-      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, :delete, 0)
-      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable::Subclass, 2, :delete, 0)
-      lambda{ Sunspot::IndexQueue::Entry.enqueue(queue, Object, 1, :delete) }.should raise_error(ArgumentError)
+      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 1, true, 0)
+      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable, 1, true, 0)
+      implementation.should_receive(:add).with(Sunspot::IndexQueue::Test::Searchable, 2, true, 0)
+      Sunspot::IndexQueue::Entry.enqueue(queue, Sunspot::IndexQueue::Test::Searchable::Subclass, 2, true, 0)
+      lambda{ Sunspot::IndexQueue::Entry.enqueue(queue, Object, 1, false) }.should raise_error(ArgumentError)
     end
     
     it "should load all records for an array of entries at once" do
