@@ -125,12 +125,15 @@ module Sunspot
     end
     
     # Process the queue. Exits when there are no more entries to process at the current time.
+    # Returns the number of entries processed.
     def process
+      count = 0
       loop do
         entries = Entry.next_batch!(self)
         if entries.nil? || entries.empty?
           break if Entry.ready_count(self) == 0
         else
+          count += entries.size
           batch = Batch.new(self, entries)
           if defined?(@batch_handler) && @batch_handler
             @batch_handler.call(batch)
@@ -139,6 +142,7 @@ module Sunspot
           end
         end
       end
+      count
     end
     
     private

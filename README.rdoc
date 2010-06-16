@@ -96,6 +96,7 @@ This will process all entries currently in the queue. Of course, you'll probably
     end
   end
 
+The logic in the queue is designed to allow concurrent processing of the queue by multiple processes, however, some documents may end up getting submitted to Solr multiple times. This can speed up the processing of a large number of documents if you need to index a large data set. Forking too many processes to handle your queue, however, will result in more and more documents being processed multiple times.
 
 == Features
 

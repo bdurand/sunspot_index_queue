@@ -103,7 +103,7 @@ describe Sunspot::IndexQueue do
       queue.session.should_receive(:commit).twice
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_1, entry_2])
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_3])
-      queue.process
+      queue.process.should == 3
     end
     
     it "should process all entries in the queue and call a batch wrapper if defined" do
@@ -118,7 +118,7 @@ describe Sunspot::IndexQueue do
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_3])
       wrapper_count = 0
       queue.batch_handler{|batch| wrapper_count += 1; batch.submit!}
-      queue.process
+      queue.process.should == 3
       wrapper_count.should == 2
     end
   end
