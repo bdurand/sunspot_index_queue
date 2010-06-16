@@ -7,7 +7,7 @@ This gem provides support for asynchronously updating a Solr index with the suns
 
 === If Solr is down, your application won't (necessarily) be down
 
-Since Solr runs as a different part of your application infrastructure, there is always the chance that it isn't working right while the rest of your application is working fine. By queueing up changes for Solr when your models change, the update parts of your application could remain up even during a Solr outage. This could be critical if it keeping your staff working or your customer placing orders.
+Since Solr runs as a different part of your application infrastructure, there is always the chance that it isn't working right while the rest of your application is working fine. By queueing up changes for Solr when your models change, the update parts of your application can remain up even during a Solr outage. This could be critical if it keeps your staff working or your customer placing orders.
 
 === Better consistency when something goes wrong
 
@@ -19,22 +19,22 @@ Queueing the updates in the same datastore that is used for persisting your mode
 
 === Spread out load peaks
 
-If you get a particularly large spike of updates to your indexed models, you might be taxing your Solr server with lots of single document updates. This could lead to downstream performance issues in your application. By queueing the Solr updates, they will be sent to the server in larger batches providing better performance. Furthermore, if Solr gets backed up updating it's index, the slow down will be isolated to the background job processing the queue.
+If you get a particularly large spike of updates to your indexed models, you could be taxing your Solr server with lots of single document updates. This could lead to downstream performance issues in your application. By queueing the Solr updates, they will be sent to the server in larger batches providing better performance. Furthermore, if Solr gets backed up updating the index, the slow down will be isolated to the background job processing the queue.
 
 
 == Usage
 
-To use asynchronous indexing, you'll need to set up two different parts.
+To use asynchronous indexing, you'll have to set up three things.
 
 === Session
 
-Your application should be initialized with a SessionProxy session. This session is set up to immediately process queries but send updates to a queue for processing later.
+Your application should be initialized with a Sunspot::IndexQueue::SessionProxy session. This will send queries immediately to Solr queries but send updates to a queue for processing later.
 
 This will set up a session proxy using the default Solr session:
 
   Sunspot.session = Sunspot::IndexQueue::SessionProxy.new
 
-If you have custom configuration settings for your session or need to wrap it in additional proxies, you can pass the session to wrap into the constructure. For example, if you have a master/slave setup running on specific ports:
+If you have custom configuration settings for your Solr session or need to wrap it with additional proxies, you can pass it to the constructor. For example, if you have a master/slave setup running on specific ports:
 
   master_session = Sunspot::Session.new{|config| config.url = 'http://master.solr.example.com/solr'}
   slave_session = Sunspot::Session.new{|config| config.url = 'http://slave01.solr.example.com/solr'}
@@ -55,7 +55,7 @@ The queue component is designed to be modular so that you can plugin a datastore
   # Queue implementation backed by MongoDB
   Sunspot::IndexQueue::Entry.implementation = :mongo
   
-  #You can also provide your own queue implementation
+  # You can also provide your own queue implementation
   Sunspot::IndexQueue::Entry.implementation = MyQueueImplementation
 
 === Process The Queue
@@ -96,11 +96,11 @@ This will process all entries currently in the queue. Of course, you'll probably
     end
   end
 
-The logic in the queue is designed to allow concurrent processing of the queue by multiple processes, however, some documents may end up getting submitted to Solr multiple times. This can speed up the processing of a large number of documents if you need to index a large data set. Forking too many processes to handle your queue, however, will result in more and more documents being processed multiple times.
+The logic in the queue is designed to allow concurrent processing of the queue by multiple processes, however, some documents may end up getting submitted to Solr multiple times. This can speed up the processing of a large number of documents if you need to index a large data set. Forking too many processes to handle your queue, however, will result in more documents being processed multiple times.
 
 == Features
 
-=== Mulitple Queues
+=== Multiple Queues
 
 If you have multiple models segmented into multiple Solr indexes, you can set up multiple queues. They will share the same persistence backend, but can be configured with different Solr sessions.
 
@@ -114,13 +114,13 @@ If you have multiple models segmented into multiple Solr indexes, you can set up
 
 === Priority
 
-When you have updates coming from multiple sources, it is often good to set a priority on when they should get processed so that when there is a backlog, it becomes less noticeable. For example, in an application that has models updated both by human interaction and by an automated feed, you probably want the human updated items to be indexed first. That way when their is a backlog, your human customers don't notice it and don't complain. You can control the priority of updates inside a block with the IndexQueue.set_priority method.
+When you have updates coming from multiple sources, it is often good to set a priority on when they should get processed so that when there is a backlog, it becomes less noticeable. For example, in an application that has models updated both by human interaction and by an automated feed, you probably want the human updated items to be indexed first. That way when their is a backlog, your human customers won't notice it. You can control the priority of updates inside a block with the Sunspot::IndexQueue.set_priority method.
 
 === Recoverability
 
-When an entry in the queue cannot be sent to Solr, it will be automatically rescheduled to be tried again later. The amount of time is controlled by the +retry_interval+ setting on IndexQueue (default to 1 minute). Every time it is tried and fails, the interval will be increased yet again (i.e. first try wait 1 minute, second try wait 2 minutes, third try wait 3 minutes, etc.).
+When an entry in the queue cannot be sent to Solr, it will be automatically rescheduled to be tried again later. The amount of time is controlled by the +retry_interval+ setting on IndexQueue (defaults to 1 minute). Every time it is tried and fails, the interval will be increased yet again (i.e. first try wait 1 minute, second try wait 2 minutes, third try wait 3 minutes, etc.).
 
-Error messages and stack traces are stored with the queue entries so the can be easily debugged.
+Error messages and stack traces are stored with the queue entries so the can be debugged.
 
 
 == Caveats
