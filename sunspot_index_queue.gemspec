@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{sunspot_index_queue}
-  s.version = "0.0.1.b1"
+  s.version = "1.0.0"
 
-  s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
+  s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
-  s.date = %q{2010-06-15}
+  s.date = %q{2010-06-16}
   s.description = %q{This gem provides asynchronous indexing to Solr for the sunspot gem. It uses a pluggable model for the backing queue and provides support for ActiveRecord and MongoDB out of the box.}
   s.email = %q{brian@embellishedvisions.com}
   s.extra_rdoc_files = [
