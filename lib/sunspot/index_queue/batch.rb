@@ -16,10 +16,10 @@ module Sunspot
       # set to be processed again in the future.
       def submit!
         Entry.load_all_records(entries)
+        clear_processed(entries)
         begin
           # First try submitting the entries in a batch since that's the most efficient.
           # If there are errors, try each entry individually in case there's a bad document.
-          clear_processed(entries)
           session.batch do
             entries.each do |entry|
               submit_entry(entry)
@@ -27,7 +27,6 @@ module Sunspot
           end
           commit!
         rescue StandardError => e
-          clear_processed(entries)
           submit_each_entry
         rescue TimeoutError => e
           submit_each_entry
@@ -50,6 +49,7 @@ module Sunspot
         session.commit
         Entry.delete_entries(@delete_entries) unless @delete_entries.empty?
       rescue Exception => e
+        clear_processed(entries)
         @delete_entries.clear
         raise e
       end
