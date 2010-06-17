@@ -134,6 +134,15 @@ describe Sunspot::IndexQueue::Entry do
       entry.record.class.should == Sunspot::IndexQueue::Test::Searchable
       entry.record.id.should == "1"
     end
+    
+    it "should set if an entry has been processed" do
+      entry = Sunspot::IndexQueue::Entry::MockImpl.new(:record_class_name => "Sunspot::IndexQueue::Test::Searchable", :record_id => "1")
+      entry.processed?.should == false
+      entry.processed = true
+      entry.processed?.should == true
+      entry.processed = false
+      entry.processed?.should == false
+    end
   end
   
 end

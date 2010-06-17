@@ -19,6 +19,7 @@ module Sunspot
         begin
           # First try submitting the entries in a batch since that's the most efficient.
           # If there are errors, try each entry individually in case there's a bad document.
+          clear_processed(entries)
           session.batch do
             entries.each do |entry|
               submit_entry(entry)
@@ -26,6 +27,7 @@ module Sunspot
           end
           commit!
         rescue StandardError => e
+          clear_processed(entries)
           submit_each_entry
         rescue TimeoutError => e
           submit_each_entry
@@ -36,6 +38,11 @@ module Sunspot
       
       def session
         @queue.session
+      end
+      
+      # Clear the processed flag on all entries.
+      def clear_processed (entries)
+        entries.each{|entry| entry.processed = false}
       end
       
       # Send the Solr commit command and delete the entries if it succeeds.
@@ -84,6 +91,7 @@ module Sunspot
       def log_entry_error (entry)
         begin
           yield
+          entry.processed = true
           @delete_entries << entry
         rescue StandardError => e
           solr_up? ? entry.set_error!(e, @queue.retry_interval) : entry.reset!

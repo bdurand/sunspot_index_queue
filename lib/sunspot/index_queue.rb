@@ -133,13 +133,13 @@ module Sunspot
         if entries.nil? || entries.empty?
           break if Entry.ready_count(self) == 0
         else
-          count += entries.size
           batch = Batch.new(self, entries)
           if defined?(@batch_handler) && @batch_handler
             @batch_handler.call(batch)
           else
             batch.submit!
           end
+          count += entries.select{|e| e.processed? }.size
         end
       end
       count

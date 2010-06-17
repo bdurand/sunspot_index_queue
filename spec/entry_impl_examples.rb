@@ -157,7 +157,7 @@ shared_examples_for "Entry implementation" do
       entry = Sunspot::IndexQueue::Entry.implementation.new('is_delete' => true)
       entry.is_delete?.should == true
     end
-  
+    
     it "should reset an entry to be indexed immediately" do
       entry = factory.create('record_class_name' => "Test", 'record_id' => 1, 'is_delete' => false, 'priority' => 10, 'run_at' => Time.now.utc + 600, 'error' => "boom!", 'attempts' => 2)
       queue = Sunspot::IndexQueue.new
@@ -180,6 +180,5 @@ shared_examples_for "Entry implementation" do
       entry.error.should include("line 1")
       entry.error.should include("line 2")
     end
-  
   end
 end

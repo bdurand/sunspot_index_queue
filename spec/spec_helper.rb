@@ -67,7 +67,7 @@ module Sunspot
       class MockImpl
         include Entry
         
-        attr_reader :record_class_name, :record_id
+        attr_reader :record_class_name, :record_id, :error, :attempts
         
         def initialize (options = {})
           if options[:record]

@@ -9,6 +9,8 @@ module Sunspot
       autoload :ActiveRecordImpl, File.expand_path('../entry/active_record_impl', __FILE__)
       autoload :DataMapperImpl, File.expand_path('../entry/data_mapper_impl', __FILE__)
       autoload :MongoImpl, File.expand_path('../entry/mongo_impl', __FILE__)
+      
+      attr_writer :processed
 
       class << self
         # Set the implementation class to use for the queue. This can be set as either a class object,
@@ -109,6 +111,11 @@ module Sunspot
             end
           end
         end
+      end
+      
+      def processed?
+        @processed = false unless defined?(@processed)
+        @processed
       end
       
       # Get the record represented by this entry.
