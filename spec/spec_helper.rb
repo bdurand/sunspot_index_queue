@@ -53,12 +53,6 @@ module Sunspot
         end
         
         class Subclass < Searchable
-          class DataAccessor < Sunspot::Adapters::DataAccessor
-            def load (id)
-              Subclass.new(id)
-            end
-          end
-
         end
       end
       
