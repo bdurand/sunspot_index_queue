@@ -4,34 +4,69 @@ require File.expand_path('../../lib/sunspot_index_queue', __FILE__)
 module Sunspot
   class IndexQueue
     module Test
-      class DataAccessor < Sunspot::Adapters::DataAccessor
-        def load (id)
-          Searchable.new(id)
-        end
-      end
-      
-      class InstanceAdapter < Sunspot::Adapters::InstanceAdapter
-        def id
-          @instance.id
-        end
-      end
-      
+      # Test class for searching against. 
       class Searchable
+        class << self
+          # Create a mock database in a block that will reload copies of saved objects.
+          def mock_db
+            save = Thread.current[:mock_db]
+            Thread.current[:mock_db] = {}
+            begin
+              yield
+            ensure
+              Thread.current[:mock_db] = save
+            end
+          end
+          
+          def db
+            Thread.current[:mock_db]
+          end
+          
+          def save (*objects)
+            objects.each do |obj|
+              db[obj.id] = obj.dup
+            end
+          end
+        end
+        
         attr_reader :id
-        def initialize (id)
+        attr_accessor :value
+        def initialize (id, value=nil)
           @id = id
+          @value = value
         end
         
         def == (value)
           value.is_a?(self.class) && @id == value.id
         end
         
+        class DataAccessor < Sunspot::Adapters::DataAccessor
+          def load (id)
+            Searchable.db ? Searchable.db[id] : Searchable.new(id)
+          end
+        end
+
+        class InstanceAdapter < Sunspot::Adapters::InstanceAdapter
+          def id
+            @instance.id
+          end
+        end
+        
         class Subclass < Searchable
+          class DataAccessor < Sunspot::Adapters::DataAccessor
+            def load (id)
+              Subclass.new(id)
+            end
+          end
+
         end
       end
       
-      Sunspot::Adapters::InstanceAdapter.register(InstanceAdapter, Searchable)
-      Sunspot::Adapters::DataAccessor.register(DataAccessor, Searchable)
+      Sunspot::Adapters::InstanceAdapter.register(Searchable::InstanceAdapter, Searchable)
+      Sunspot::Adapters::DataAccessor.register(Searchable::DataAccessor, Searchable)
+      Sunspot.setup(Searchable) do
+        string :value
+      end
     end
     
     module Entry
