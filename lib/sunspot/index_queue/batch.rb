@@ -3,7 +3,12 @@ module Sunspot
     # Batch of entries to be indexed with Solr.
     class Batch
       attr_reader :entries
-    
+      
+      # Errors that cause batch processing to stop and are immediately passed on to the caller. All other
+      # are logged on the entry on the assumption that they can be fixed later while other entries can still
+      # be processed.
+      PASS_THROUGH_EXCEPTIONS = [SystemExit, NoMemoryError, Interrupt, SignalException, Errno::ECONNREFUSED]
+      
       def initialize (queue, entries = nil)
         @queue = queue
         @entries = []
@@ -26,10 +31,21 @@ module Sunspot
             end
           end
           commit!
-        rescue StandardError => e
-          submit_each_entry
-        rescue TimeoutError => e
-          submit_each_entry
+        rescue Exception => e
+          if PASS_THROUGH_EXCEPTIONS.include?(e.class)
+            raise e
+          else
+            submit_each_entry
+          end
+        end
+      rescue Exception => e
+        begin
+          clear_processed(entries)
+          entries.each{|entry| entry.reset!} if PASS_THROUGH_EXCEPTIONS.include?(e.class)
+        ensure
+          # Use a more specific error to indicate Solr is down.
+          e = SolrNotResponding.new(e.message) if e.is_a?(Errno::ECONNREFUSED)
+          raise e
         end
       end
 
@@ -56,21 +72,19 @@ module Sunspot
       
       # Submit all entries to Solr individually and then commit.
       def submit_each_entry
-        return unless solr_up?
-        
         entries.each do |entry|
           submit_entry(entry)
         end
         
         begin
           commit!
-        rescue StandardError => e
-          entries.each do |entry|
-            entry.set_error!(e, @queue.retry_interval)
-          end
-        rescue TimeoutError => e
-          entries.each do |entry|
-            entry.set_error!(e, @queue.retry_interval)
+        rescue Exception => e
+          if PASS_THROUGH_EXCEPTIONS.include?(e.class)
+            raise e
+          else
+            entries.each do |entry|
+              entry.set_error!(e, @queue.retry_interval)
+            end
           end
         end
       end
@@ -93,16 +107,13 @@ module Sunspot
           yield
           entry.processed = true
           @delete_entries << entry
-        rescue StandardError => e
-          solr_up? ? entry.set_error!(e, @queue.retry_interval) : entry.reset!
-        rescue TimeoutError => e
-          solr_up? ? entry.set_error!(e, @queue.retry_interval) : entry.reset!
+        rescue Exception => e
+          if PASS_THROUGH_EXCEPTIONS.include?(e.class)
+            raise e
+          else
+            entry.set_error!(e, @queue.retry_interval)
+          end
         end
-      end
-      
-      def solr_up?
-        # TODO this is a placeholder in case Sunspot should expose the ping command.
-        true
       end
     end
   end

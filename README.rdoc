@@ -92,8 +92,14 @@ This will process all entries currently in the queue. Of course, you'll probably
         queue.process
         sleep(2)
       rescue Exception => e
+        # Make sure we can exit the loop on a shutdown
         raise e if e.is_a?(SystemExit) || e.is_a?(Interrupt)
-        Rails.logger.error(e)
+        # If Solr isn't responding, wait a while to give it time to get back up
+        if e.is_a?(Sunspot::IndexQueue::SolrNotResponding)
+          sleep(30)
+        else
+          Rails.logger.error(e)
+        end
       end
     end
   end
@@ -123,3 +129,5 @@ When you have updates coming from multiple sources, it is often good to set a pr
 When an entry in the queue cannot be sent to Solr, it will be automatically rescheduled to be tried again later. The amount of time is controlled by the +retry_interval+ setting on IndexQueue (defaults to 1 minute). Every time it is tried and fails, the interval will be increased yet again (i.e. first try wait 1 minute, second try wait 2 minutes, third try wait 3 minutes, etc.).
 
 Error messages and stack traces are stored with the queue entries so the can be debugged.
+
+sThe exception to this is that if Solr is down altogether, the queue will stop processing and entries will be restored to try again immediately. This error is not logged on the entries but is rather thrown as a Sunspot::IndexQueue::SolrNotResponding exception.

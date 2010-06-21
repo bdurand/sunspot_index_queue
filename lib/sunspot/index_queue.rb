@@ -10,6 +10,10 @@ module Sunspot
     autoload :Entry, File.expand_path('../index_queue/entry', __FILE__)
     autoload :SessionProxy, File.expand_path('../index_queue/session_proxy', __FILE__)
     
+    # This exception will be thrown if Solr is not responding.
+    class SolrNotResponding < StandardError
+    end
+    
     attr_accessor :retry_interval, :batch_size
     attr_reader :session, :class_names
     
@@ -47,6 +51,7 @@ module Sunspot
     def initialize (options = {})
       @retry_interval = options[:retry_interval] || 60
       @batch_size = options[:batch_size] || 100
+      @batch_handler = nil
       @class_names = []
       if options[:class_names].is_a?(Array)
         @class_names.concat(options[:class_names].collect{|name| name.to_s})
@@ -126,6 +131,10 @@ module Sunspot
     
     # Process the queue. Exits when there are no more entries to process at the current time.
     # Returns the number of entries processed.
+    #
+    # If any errors are encountered while processing the queue, they will be logged with the errors so they can
+    # be fixed and tried again later. However, if Solr is refusing connections, the processing is stopped right
+    # away and a Sunspot::IndexQueue::SolrNotResponding exception is raised.
     def process
       count = 0
       loop do

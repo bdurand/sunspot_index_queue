@@ -74,7 +74,7 @@ module Sunspot
         
         # Add an entry the queue. +is_delete+ will be true if the entry is a delete. Implementations must implement this method.
         def add (klass, id, delete, options = {})
-          raise NotImplementedError.new
+          raise NotImplementedError.new("add")
         end
         
         # Add multiple entries to the queue. +delete+ will be true if the entry is a delete.
@@ -125,12 +125,12 @@ module Sunspot
 
       # Set the error message on an entry. Implementations must implement this method.
       def set_error! (error, retry_interval = nil)
-        raise NotImplementedError.new
+        raise NotImplementedError.new("set_error!")
       end
 
       # Reset an entry to be executed again immediatel and clear any errors. Implementations must implement this method.
       def reset!
-        raise NotImplementedError.new
+        raise NotImplementedError.new("reset!")
       end
     end
   end
