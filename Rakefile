@@ -7,7 +7,7 @@ task :default => :test
 
 begin
   require 'spec/rake/spectask'
-  desc 'Test json_record.'
+  desc 'Test the gem.'
   Spec::Rake::SpecTask.new(:test) do |t|
     t.spec_files = FileList.new('spec/**/*_spec.rb')
   end
@@ -38,7 +38,7 @@ begin
     
     gem.add_dependency('sunspot', '>= 1.1.0')
     gem.add_development_dependency('sqlite3')
-    gem.add_development_dependency('active_record')
+    gem.add_development_dependency('activerecord', '>= 2.2')
     gem.add_development_dependency('dm-core', '>= 1.0.0')
     gem.add_development_dependency('dm-aggregates', '>=1.0.0')
     gem.add_development_dependency('dm-migrations', '>=1.0.0')
