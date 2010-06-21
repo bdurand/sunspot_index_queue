@@ -101,8 +101,10 @@ module Sunspot
           begin
             save!
           rescue => e
-            DataMapper.logger.warn(error)
-            DataMapper.logger.warn(e)
+            if DataMapper.logger
+              DataMapper.logger.warn(error)
+              DataMapper.logger.warn(e)
+            end
           end
         end
 

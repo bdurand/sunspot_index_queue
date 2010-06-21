@@ -119,8 +119,10 @@ module Sunspot
           begin
             save!
           rescue => e
-            logger.warn(error)
-            logger.warn(e)
+            if logger
+              logger.warn(error)
+              logger.warn(e)
+            end
           end
         end
 
