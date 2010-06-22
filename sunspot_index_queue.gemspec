@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
-  s.date = %q{2010-06-17}
+  s.date = %q{2010-06-22}
   s.description = %q{This gem provides asynchronous indexing to Solr for the sunspot gem. It uses a pluggable model for the backing queue and provides support for ActiveRecord and MongoDB out of the box.}
   s.email = %q{brian@embellishedvisions.com}
   s.extra_rdoc_files = [
@@ -66,7 +66,7 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<sunspot>, [">= 1.1.0"])
       s.add_development_dependency(%q<sqlite3>, [">= 0"])
-      s.add_development_dependency(%q<active_record>, [">= 0"])
+      s.add_development_dependency(%q<activerecord>, [">= 2.2"])
       s.add_development_dependency(%q<dm-core>, [">= 1.0.0"])
       s.add_development_dependency(%q<dm-aggregates>, [">= 1.0.0"])
       s.add_development_dependency(%q<dm-migrations>, [">= 1.0.0"])
@@ -76,7 +76,7 @@ Gem::Specification.new do |s|
     else
       s.add_dependency(%q<sunspot>, [">= 1.1.0"])
       s.add_dependency(%q<sqlite3>, [">= 0"])
-      s.add_dependency(%q<active_record>, [">= 0"])
+      s.add_dependency(%q<activerecord>, [">= 2.2"])
       s.add_dependency(%q<dm-core>, [">= 1.0.0"])
       s.add_dependency(%q<dm-aggregates>, [">= 1.0.0"])
       s.add_dependency(%q<dm-migrations>, [">= 1.0.0"])
@@ -87,7 +87,7 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<sunspot>, [">= 1.1.0"])
     s.add_dependency(%q<sqlite3>, [">= 0"])
-    s.add_dependency(%q<active_record>, [">= 0"])
+    s.add_dependency(%q<activerecord>, [">= 2.2"])
     s.add_dependency(%q<dm-core>, [">= 1.0.0"])
     s.add_dependency(%q<dm-aggregates>, [">= 1.0.0"])
     s.add_dependency(%q<dm-migrations>, [">= 1.0.0"])
