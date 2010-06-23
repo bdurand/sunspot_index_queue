@@ -3,12 +3,11 @@ require 'active_record'
 
 describe "Sunspot::IndexQueue integration tests" do
   before :all do
-    db_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
-    Dir.mkdir(db_dir) unless File.exist?(db_dir)
-    Dir.chdir(db_dir) do
-      FileUtils.rm_rf('data') if File.exist?('data')
-      Dir.mkdir('data')
-      `sunspot-solr start --port=18983 --data-directory=data --pid-dir=data --log-file=data/solr.log --max-memory=64m`
+    data_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
+    FileUtils.rm_rf(data_dir) if File.exist?(data_dir)
+    Dir.mkdir(data_dir)
+    Dir.chdir(data_dir) do
+      `sunspot-solr start --port=18983 --data-directory=. --pid-dir=. --log-file=./solr.log --max-memory=64m`
       raise "Failed to start Solr on port 18983" unless $? == 0
       # Wait until the server is responding
       ping_uri = URI.parse("http://127.0.0.1:18983/solr/ping")
@@ -24,10 +23,7 @@ describe "Sunspot::IndexQueue integration tests" do
       end
       raise "Solr failed to start after 10 seconds" unless solr_started
     end
-    
-    db = File.join(db_dir, 'sunspot_index_queue_test.sqlite3')
-    File.delete(db) if File.exist?(db)
-    ActiveRecord::Base.establish_connection("adapter" => "sqlite3", "database" => db)
+    ActiveRecord::Base.establish_connection("adapter" => "sqlite3", "database" => ":memory:")
     Sunspot::IndexQueue::Entry.implementation = :active_record
     Sunspot::IndexQueue::Entry::ActiveRecordImpl.create_table
     
@@ -37,16 +33,14 @@ describe "Sunspot::IndexQueue integration tests" do
   end
   
   after :all do
-    db_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
-    Dir.chdir(db_dir) do
-      `sunspot-solr stop --pid-dir=data`
+    data_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
+    if File.exist?(data_dir)
+      Dir.chdir(data_dir) do
+        `sunspot-solr stop --pid-dir=.`
+      end
+      FileUtils.rm_rf(data_dir)
     end
-    db = File.join(db_dir, 'sunspot_index_queue_test.sqlite3')
-    data = File.join(db_dir, 'data')
-    FileUtils.rm_rf(data) if File.exist?(data)
     ActiveRecord::Base.connection.disconnect!
-    File.delete(db) if File.exist?(db)
-    Dir.delete(db_dir) if File.exist?(db_dir) and Dir.entries(db_dir).reject{|f| f.match(/^\.+$/)}.empty?
     Sunspot::IndexQueue::Entry.implementation = nil
   end
   
