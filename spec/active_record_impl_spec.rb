@@ -11,6 +11,7 @@ describe Sunspot::IndexQueue::Entry::ActiveRecordImpl do
   end
   
   after :all do
+    Sunspot::IndexQueue::Entry::ActiveRecordImpl.connection.drop_table(Sunspot::IndexQueue::Entry::ActiveRecordImpl.table_name)
     ActiveRecord::Base.connection.disconnect!
     Sunspot::IndexQueue::Entry.implementation = nil
   end

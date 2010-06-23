@@ -40,6 +40,7 @@ describe "Sunspot::IndexQueue integration tests" do
       end
       FileUtils.rm_rf(data_dir)
     end
+    Sunspot::IndexQueue::Entry::ActiveRecordImpl.connection.drop_table(Sunspot::IndexQueue::Entry::ActiveRecordImpl.table_name)
     ActiveRecord::Base.connection.disconnect!
     Sunspot::IndexQueue::Entry.implementation = nil
   end
