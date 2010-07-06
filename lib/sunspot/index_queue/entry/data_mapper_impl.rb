@@ -4,17 +4,9 @@ require 'dm-aggregates'
 module Sunspot
   class IndexQueue
     module Entry
-      # Implementation of an indexing queue backed by ActiveRecord.
+      # Implementation of an indexing queue backed by Datamapper.
       #
-      # To create the table, you should have a migration containing the following:
-      #
-      #   self.up
-      #     Sunspot::IndexQueue::Entry::ActiveRecordImpl.create_table
-      #   end
-      #
-      #   self.down
-      #     drop_table Sunspot::IndexQueue::Entry::ActiveRecordImpl.table_name
-      #   end
+      # To create the table, you can use +dm-migrations+ and run +auto_migrate!+ on this class.
       class DataMapperImpl
         include DataMapper::Resource
         include Entry

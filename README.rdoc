@@ -59,6 +59,12 @@ The queue component is designed to be modular so that you can plugin a datastore
   
   # You can also provide your own queue implementation
   Sunspot::IndexQueue::Entry.implementation = MyQueueImplementation
+  
+You'll need to make sure you have the data structures set up properly for the implementation you choose. See the documentation for the implementations for more details
+
+* Sunspot::IndexQueue::Entry::ActiveRecordImpl
+* Sunspot::IndexQueue::Entry::DataMapperImpl
+* Sunspot::IndexQueue::Entry::MongoImpl
 
 === Process The Queue
 
