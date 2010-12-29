@@ -14,7 +14,7 @@ module Sunspot
         storage_names[:default] = "sunspot_index_queue_entries"
         property :id, Serial
         property :run_at, Time, :index => :run_at
-        property :record_class_name, String, :index => [:record, :run_at]
+        property :record_class_name, String, :index => [:run_at]
         property :record_id, Integer, :index => [:record]
         property :priority, Integer, :default => 0, :index => :run_at
         property :is_delete, Boolean
