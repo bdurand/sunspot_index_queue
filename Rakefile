@@ -12,7 +12,7 @@ begin
     t.spec_files = FileList.new('spec/**/*_spec.rb')
   end
 rescue LoadError
-  tast :test do
+  task :test do
     STDERR.puts "You must have rspec >= 1.3.0 to run the tests"
   end
 end
