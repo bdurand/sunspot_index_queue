@@ -105,7 +105,7 @@ module Sunspot
               t.integer :attempts, :null => false, :default => 0
             end
 
-            connection.add_index table_name, [:record_class_name, :record_id], :name => "#{table_name}_record"
+            connection.add_index table_name, [:record_id], :name => "#{table_name}_record_id"
             connection.add_index table_name, [:run_at, :record_class_name, :priority], :name => "#{table_name}_run_at"
           end
         end
