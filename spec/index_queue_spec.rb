@@ -92,14 +92,14 @@ describe Sunspot::IndexQueue do
     let(:record_1) { Sunspot::IndexQueue::Test::Searchable.new(1) }
     let(:record_2) { Sunspot::IndexQueue::Test::Searchable.new(2) }
     let(:record_3) { Sunspot::IndexQueue::Test::Searchable.new(3) }
-    
+
     it "should process all entries in the queue in batch of batch_size" do
       Sunspot::IndexQueue::Entry.should_receive(:next_batch!).with(queue).and_return([entry_1, entry_2], [entry_3], [])
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:ready_count).with(queue).and_return(0)
       queue.session.should_receive(:batch).twice.and_yield
-      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "1")
-      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "2")
-      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "3")
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", 1)
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", 2)
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", 3)
       queue.session.should_receive(:commit).twice
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_1, entry_2])
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_3])
@@ -110,9 +110,9 @@ describe Sunspot::IndexQueue do
       Sunspot::IndexQueue::Entry.should_receive(:next_batch!).with(queue).and_return([entry_1, entry_2], [entry_3], [])
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:ready_count).with(queue).and_return(0)
       queue.session.should_receive(:batch).twice.and_yield
-      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "1")
-      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "2")
-      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", "3")
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", 1)
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", 2)
+      queue.session.should_receive(:remove_by_id).with("Sunspot::IndexQueue::Test::Searchable", 3)
       queue.session.should_receive(:commit).twice
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_1, entry_2])
       Sunspot::IndexQueue::Entry::MockImpl.should_receive(:delete_entries).with([entry_3])

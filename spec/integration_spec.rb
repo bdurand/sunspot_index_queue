@@ -50,9 +50,9 @@ describe "Sunspot::IndexQueue integration tests" do
   
   it "should actually work" do
     Sunspot::IndexQueue::Test::Searchable.mock_db do
-      record_1 = Sunspot::IndexQueue::Test::Searchable.new("1", "one")
-      record_2 = Sunspot::IndexQueue::Test::Searchable.new("2", "two")
-      record_3 = Sunspot::IndexQueue::Test::Searchable::Subclass.new("3", "three")
+      record_1 = Sunspot::IndexQueue::Test::Searchable.new(1, "one")
+      record_2 = Sunspot::IndexQueue::Test::Searchable.new(2, "two")
+      record_3 = Sunspot::IndexQueue::Test::Searchable::Subclass.new(3, "three")
       Sunspot::IndexQueue::Test::Searchable.save(record_1, record_2, record_3)
     
       # Enqueue records

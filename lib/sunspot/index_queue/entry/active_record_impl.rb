@@ -96,7 +96,7 @@ module Sunspot
           def create_table
             connection.create_table table_name do |t|
               t.string :record_class_name, :null => false
-              t.string :record_id, :null => false
+              t.integer :record_id, :null => false
               t.boolean :is_delete, :null => false, :default => false
               t.datetime :run_at, :null => false
               t.integer :priority, :null => false, :default => 0

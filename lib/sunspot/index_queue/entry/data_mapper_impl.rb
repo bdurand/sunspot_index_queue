@@ -15,7 +15,7 @@ module Sunspot
         property :id, Serial
         property :run_at, Time, :index => :run_at
         property :record_class_name, String, :index => [:record, :run_at]
-        property :record_id, String, :index => [:record]
+        property :record_id, Integer, :index => [:record]
         property :priority, Integer, :default => 0, :index => :run_at
         property :is_delete, Boolean
         property :lock, Integer

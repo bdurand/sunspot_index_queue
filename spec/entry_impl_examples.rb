@@ -11,13 +11,13 @@ shared_examples_for "Entry implementation" do
   context "class methods" do
     before :each do
       test_class = "Sunspot::IndexQueue::Test::Searchable"
-      @entry_1 = factory.create('record_class_name' => test_class, 'record_id' => '1', 'is_delete' => false, 'priority' => 0, 'run_at' => Time.now.utc)
-      @entry_2 = factory.create('record_class_name' => test_class, 'record_id' => '2', 'is_delete' => false, 'priority' => 10, 'run_at' => Time.now.utc, 'error' => "boom!", 'attempts' => 1)
-      @entry_3 = factory.create('record_class_name' => "Object", 'record_id' => '3', 'is_delete' => false, 'priority' => 5, 'run_at' => Time.now.utc, 'error' => "boom!", 'attempts' => 1)
-      @entry_4 = factory.create('record_class_name' => test_class, 'record_id' => '4', 'is_delete' => true, 'priority' => 0, 'run_at' => Time.now.utc + 60)
-      @entry_5 = factory.create('record_class_name' => test_class, 'record_id' => '5', 'is_delete' => false, 'priority' => -10, 'run_at' => Time.now.utc - 60)
-      @entry_6 = factory.create('record_class_name' => test_class, 'record_id' => '6', 'is_delete' => false, 'priority' => 0, 'run_at' => Time.now.utc - 3600)
-      @entry_7 = factory.create('record_class_name' => test_class, 'record_id' => '7', 'is_delete' => true, 'priority' => 10, 'run_at' => Time.now.utc - 60)
+      @entry_1 = factory.create('record_class_name' => test_class, 'record_id' => 1, 'is_delete' => false, 'priority' => 0, 'run_at' => Time.now.utc)
+      @entry_2 = factory.create('record_class_name' => test_class, 'record_id' => 2, 'is_delete' => false, 'priority' => 10, 'run_at' => Time.now.utc, 'error' => "boom!", 'attempts' => 1)
+      @entry_3 = factory.create('record_class_name' => "Object", 'record_id' => 3, 'is_delete' => false, 'priority' => 5, 'run_at' => Time.now.utc, 'error' => "boom!", 'attempts' => 1)
+      @entry_4 = factory.create('record_class_name' => test_class, 'record_id' => 4, 'is_delete' => true, 'priority' => 0, 'run_at' => Time.now.utc + 60)
+      @entry_5 = factory.create('record_class_name' => test_class, 'record_id' => 5, 'is_delete' => false, 'priority' => -10, 'run_at' => Time.now.utc - 60)
+      @entry_6 = factory.create('record_class_name' => test_class, 'record_id' => 6, 'is_delete' => false, 'priority' => 0, 'run_at' => Time.now.utc - 3600)
+      @entry_7 = factory.create('record_class_name' => test_class, 'record_id' => 7, 'is_delete' => true, 'priority' => 10, 'run_at' => Time.now.utc - 60)
     end
     
     context "without class_names filter" do
@@ -107,10 +107,10 @@ shared_examples_for "Entry implementation" do
     
     context "add and remove" do
       it "should add an entry" do
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 100)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, 10, false, 100)
         entry = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new).detect{|e| e.priority == 100}
         entry.record_class_name.should == "Sunspot::IndexQueue::Test::Searchable"
-        entry.record_id.should == "10"
+        entry.record_id.should == 10
         entry.is_delete?.should == false
         entry.priority.should == 100
       end
@@ -123,14 +123,14 @@ shared_examples_for "Entry implementation" do
       end
       
       it "should not add multiple entries unless a row is being processed" do
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 80)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, 10, false, 80)
         Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new)
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 100)
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", false, 110)
-        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, "10", true, 90)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, 10, false, 100)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, 10, false, 110)
+        Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, 10, true, 90)
         Sunspot::IndexQueue::Entry.implementation.reset!(Sunspot::IndexQueue.new)
         entries = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new)
-        entries.detect{|e| e.priority == 80}.record_id.should == "10"
+        entries.detect{|e| e.priority == 80}.record_id.should == 10
         entries.detect{|e| e.priority == 100}.should == nil
         entries.detect{|e| e.priority == 90}.should == nil
         entry = entries.detect{|e| e.priority == 110}
@@ -147,8 +147,8 @@ shared_examples_for "Entry implementation" do
     end
   
     it "should get the record_id" do
-      entry = Sunspot::IndexQueue::Entry.implementation.new('record_id' => "1")
-      entry.record_id.should == "1"
+      entry = Sunspot::IndexQueue::Entry.implementation.new('record_id' => 1)
+      entry.record_id.should == 1
     end
   
     it "should determine if the entry is an delete" do

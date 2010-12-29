@@ -55,7 +55,7 @@ module Sunspot
         class Subclass < Searchable
         end
       end
-      
+
       Sunspot::Adapters::InstanceAdapter.register(Searchable::InstanceAdapter, Searchable)
       Sunspot::Adapters::DataAccessor.register(Searchable::DataAccessor, Searchable)
       Sunspot.setup(Searchable) do
@@ -72,10 +72,10 @@ module Sunspot
         def initialize (options = {})
           if options[:record]
             @record_class_name = options[:record].class.name
-            @record_id = options[:record].id.to_s
+            @record_id = options[:record].id
           else
             @record_class_name = options[:record_class_name]
-            @record_id = options[:record_id].to_s
+            @record_id = options[:record_id]
           end
           @is_delete = !!options[:delete]
         end
