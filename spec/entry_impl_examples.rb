@@ -40,7 +40,7 @@ shared_examples_for "Entry implementation" do
         errors.collect{|e| e.record_id}.sort.should == [@entry_2.record_id, @entry_3.record_id]
 
         errors = Sunspot::IndexQueue::Entry.implementation.errors(queue, 1, 1)
-        errors.collect{|e| e.record_id}.sort.should == [@entry_3.record_id]
+        ([@entry_2.record_id, @entry_3.record_id] - errors.collect{|e| e.record_id}).size.should == 1
       end
 
       it "should reset all entries" do

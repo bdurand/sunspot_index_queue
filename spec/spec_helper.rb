@@ -1,4 +1,23 @@
 require 'rubygems'
+
+if ENV["ACTIVE_RECORD_VERSION"]
+  gem 'activerecord', ENV["ACTIVE_RECORD_VERSION"]
+else
+  gem 'activerecord'
+end
+
+if ENV["DATA_MAPPER_VERSON"]
+  gem 'dm-core', ENV["DATA_MAPPER_VERSON"]
+else
+  gem 'dm-core'
+end
+
+if ENV["SUNSPOT_VERSION"]
+  gem 'sunspot', ENV["SUNSPOT_VERSION"]
+else
+  gem 'sunspot'
+end
+
 require File.expand_path('../../lib/sunspot_index_queue', __FILE__)
 
 module Sunspot
@@ -24,7 +43,7 @@ module Sunspot
           
           def save (*objects)
             objects.each do |obj|
-              db[obj.id] = obj.dup
+              db[obj.id.to_s] = obj.dup
             end
           end
         end
@@ -42,7 +61,11 @@ module Sunspot
         
         class DataAccessor < Sunspot::Adapters::DataAccessor
           def load (id)
-            Searchable.db ? Searchable.db[id] : Searchable.new(id)
+            Searchable.db ? Searchable.db[id.to_s] : Searchable.new(id)
+          end
+          
+          def load_all (ids)
+            ids.collect{|id| load(id)}.compact
           end
         end
 
