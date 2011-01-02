@@ -14,6 +14,10 @@ module Sunspot
       #   self.down
       #     drop_table Sunspot::IndexQueue::Entry::ActiveRecordImpl.table_name
       #   end
+      #
+      # The default set up is to use an integer for the +record_id+ column type since it
+      # is the most efficient and works with most data models. If you need to use a string
+      # as the primary key, you can add additional statements to the migration to do so.
       class ActiveRecordImpl < ActiveRecord::Base
         include Entry
         
@@ -105,7 +109,7 @@ module Sunspot
               t.integer :attempts, :null => false, :default => 0
             end
 
-            connection.add_index table_name, [:record_id], :name => "#{table_name}_record_id"
+            connection.add_index table_name, :record_id
             connection.add_index table_name, [:run_at, :record_class_name, :priority], :name => "#{table_name}_run_at"
           end
         end

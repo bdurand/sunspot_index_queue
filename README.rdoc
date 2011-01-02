@@ -66,6 +66,8 @@ You'll need to make sure you have the data structures set up properly for the im
 * Sunspot::IndexQueue::Entry::DataMapperImpl
 * Sunspot::IndexQueue::Entry::MongoImpl
 
+Note that as of version 1.1.0 the data structure for the ActiveRecord and the DataMapper implementations assumes the primary key on the indexed records is an integer. This is done since it is the usual case and far more efficient that using a string index. If your records use a primary key that is not an integer, you'll need to add an additional migration to change the +record_id+ column type.
+
 === Process The Queue
 
 To process the queue:

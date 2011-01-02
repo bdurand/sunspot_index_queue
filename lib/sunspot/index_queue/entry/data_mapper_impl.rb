@@ -7,6 +7,10 @@ module Sunspot
       # Implementation of an indexing queue backed by Datamapper.
       #
       # To create the table, you can use +dm-migrations+ and run +auto_migrate!+ on this class.
+      #
+      # This implementation assumes the primary key of the records being indexed in an integer
+      # since that works with most data models and is very efficient. If this is not the case,
+      # you can subclass this class and change the data type of the +record_id+ property.
       class DataMapperImpl
         include DataMapper::Resource
         include Entry
@@ -14,8 +18,8 @@ module Sunspot
         storage_names[:default] = "sunspot_index_queue_entries"
         property :id, Serial
         property :run_at, Time, :index => :run_at
-        property :record_class_name, String, :index => [:run_at]
-        property :record_id, Integer, :index => [:record]
+        property :record_class_name, String, :index => :run_at
+        property :record_id, Integer, :index => :record_id
         property :priority, Integer, :default => 0, :index => :run_at
         property :is_delete, Boolean
         property :lock, Integer
