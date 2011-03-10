@@ -92,8 +92,8 @@ module Sunspot
           end
           
           # Implementation of the delete_entries method.
-          def delete_entries (ids)
-            delete_all(:id => ids)
+          def delete_entries (entries)
+            delete_all(:id => entries)
           end
           
           # Create the table used to store the queue in the database.
