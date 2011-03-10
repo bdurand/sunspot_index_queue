@@ -116,7 +116,7 @@ shared_examples_for "Entry implementation" do
       end
   
       it "should delete a list of entry ids" do
-        Sunspot::IndexQueue::Entry.implementation.delete_entries([@entry_1.id, @entry_2.id])
+        Sunspot::IndexQueue::Entry.implementation.delete_entries([@entry_1, @entry_2])
         factory.find(@entry_1.id).should == nil
         factory.find(@entry_2.id).should == nil
         factory.find(@entry_4.id).id.should == @entry_4.id
