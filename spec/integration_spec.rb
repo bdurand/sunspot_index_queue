@@ -1,5 +1,8 @@
 require 'spec_helper'
 require 'active_record'
+require 'fileutils'
+require 'uri'
+require 'net/http'
 
 describe "Sunspot::IndexQueue integration tests" do
   before :all do
