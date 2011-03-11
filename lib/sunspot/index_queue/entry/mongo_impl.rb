@@ -9,10 +9,10 @@ module Sunspot
       # To set it up, you need to set the connection and database that it will use.
       #
       #   Sunspot::IndexQueue::Entry::MongoImpl.connection = 'localhost'
-      #   Sunspot::IndexQueue::Entry::MongoImpl.database = 'my_database'
+      #   Sunspot::IndexQueue::Entry::MongoImpl.database_name = 'my_database'
       #   # or
       #   Sunspot::IndexQueue::Entry::MongoImpl.connection = Mongo::Connection.new('localhost', 27017)
-      #   Sunspot::IndexQueue::Entry::MongoImpl.database = 'my_database'
+      #   Sunspot::IndexQueue::Entry::MongoImpl.database_name = 'my_database'
       class MongoImpl
         include Entry
 
