@@ -24,7 +24,7 @@ module Sunspot
         # Implementations should support pulling entries in batches by a priority where higher priority
         # entries are processed first. Errors should be automatically retried after an interval specified
         # by the IndexQueue. The batch size set by the IndexQueue should also be honored.
-        def implementation= (klass)
+        def implementation=(klass)
           unless klass.is_a?(Class) || klass.nil?
             class_name = klass.to_s
             class_name = Sunspot::Util.camel_case(class_name).gsub('/', '::') unless class_name.include?('::')
@@ -43,42 +43,42 @@ module Sunspot
         end
         
         # Get a count of the queue entries for an IndexQueue. Implementations must implement this method.
-        def total_count (queue)
+        def total_count(queue)
           implementation.total_count(queue)
         end
         
         # Get a count of the entries ready to be processed for an IndexQueue. Implementations must implement this method.
-        def ready_count (queue)
+        def ready_count(queue)
           implementation.ready_count(queue)
         end
         
         # Get a count of the error entries for an IndexQueue. Implementations must implement this method.
-        def error_count (queue)
+        def error_count(queue)
           implementation.error_count(queue)
         end
         
         # Get the specified number of error entries for an IndexQueue. Implementations must implement this method.
-        def errors (queue, limit, offset)
+        def errors(queue, limit, offset)
           implementation.errors(queue, limit, offset)
         end
         
         # Get the next batch of entries to process for IndexQueue. Implementations must implement this method.
-        def next_batch! (queue)
+        def next_batch!(queue)
           implementation.next_batch!(queue)
         end
         
         # Reset the entries in the queue to be excuted again immediately and clear any errors.
-        def reset! (queue)
+        def reset!(queue)
           implementation.reset!(queue)
         end
         
         # Add an entry the queue. +is_delete+ will be true if the entry is a delete. Implementations must implement this method.
-        def add (klass, id, delete, options = {})
+        def add(klass, id, delete, options = {})
           raise NotImplementedError.new("add")
         end
         
         # Add multiple entries to the queue. +delete+ will be true if the entry is a delete.
-        def enqueue (queue, klass, ids, delete, priority)
+        def enqueue(queue, klass, ids, delete, priority)
           klass = Sunspot::Util.full_const_get(klass.to_s) unless klass.is_a?(Class)
           unless queue.class_names.empty? || queue.class_names.include?(klass.name)
             raise ArgumentError.new("Class #{klass.name} is not in the class names allowed for the queue")
@@ -94,13 +94,13 @@ module Sunspot
         end
         
         # Delete entries from the queue. Implementations must implement this method.
-        def delete_entries (entries)
+        def delete_entries(entries)
           implementation.delete_entries(entries)
         end
         
         # Load all records in an array of entries. This can be faster than calling load on each DataAccessor
         # depending on them implementation
-        def load_all_records (entries)
+        def load_all_records(entries)
           classes = entries.collect{|entry| entry.record_class_name}.uniq.collect{|name| Sunspot::Util.full_const_get(name) rescue nil}.compact
           map = entries.inject({}){|hash, entry| hash[entry.record_id.to_s] = entry; hash}
           classes.each do |klass|
@@ -124,7 +124,7 @@ module Sunspot
       end
 
       # Set the error message on an entry. Implementations must implement this method.
-      def set_error! (error, retry_interval = nil)
+      def set_error!(error, retry_interval = nil)
         raise NotImplementedError.new("set_error!")
       end
 

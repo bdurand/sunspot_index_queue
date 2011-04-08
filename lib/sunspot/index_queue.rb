@@ -19,7 +19,7 @@ module Sunspot
     
     class << self
       # Set the default priority for indexing items within a block. Higher priority items will be processed first.
-      def set_priority (priority, &block)
+      def set_priority(priority, &block)
         save_val = Thread.current[:sunspot_index_queue_priority]
         begin
           Thread.current[:sunspot_index_queue_priority] = priority.to_i
@@ -48,7 +48,7 @@ module Sunspot
     # queues process different classes of records when they need to different configurations.
     #
     # +:session+ - The Sunspot::Session object to use for communicating with Solr (defaults to a session with the default config).
-    def initialize (options = {})
+    def initialize(options = {})
       @retry_interval = options[:retry_interval] || 60
       @batch_size = options[:batch_size] || 100
       @batch_handler = nil
@@ -71,14 +71,14 @@ module Sunspot
     #       batch.submit!
     #     end
     #   end
-    def batch_handler (&block)
+    def batch_handler(&block)
       @batch_handler = block
     end
     
     # Add a record to be indexed to the queue. The record can be specified as either an indexable object or as
     # as hash with :class and :id keys. The priority to be indexed can be passed in the options as +:priority+
     # (defaults to 0).
-    def index (record_or_hash, options = {})
+    def index(record_or_hash, options = {})
       klass, id = class_and_id(record_or_hash)
       Entry.enqueue(self, klass, id, false, options[:priority] || self.class.default_priority)
     end
@@ -86,20 +86,20 @@ module Sunspot
     # Add a record to be removed to the queue. The record can be specified as either an indexable object or as
     # as hash with :class and :id keys. The priority to be indexed can be passed in the options as +:priority+
     # (defaults to 0).
-    def remove (record_or_hash, options = {})
+    def remove(record_or_hash, options = {})
       klass, id = class_and_id(record_or_hash)
       Entry.enqueue(self, klass, id, true, options[:priority] || self.class.default_priority)
     end
 
     # Add a list of records to be indexed to the queue. The priority to be indexed can be passed in the
     # options as +:priority+ (defaults to 0).
-    def index_all (klass, ids, options = {})
+    def index_all(klass, ids, options = {})
       Entry.enqueue(self, klass, ids, false, options[:priority] || self.class.default_priority)
     end
 
     # Add a list of records to be removed to the queue. The priority to be indexed can be passed in the
     # options as +:priority+ (defaults to 0).
-    def remove_all (klass, ids, options = {})
+    def remove_all(klass, ids, options = {})
       Entry.enqueue(self, klass, ids, true, options[:priority] || self.class.default_priority)
     end
     
@@ -119,7 +119,7 @@ module Sunspot
     end
     
     # Get the entries in the queue that have errors. Supported options are +:limit+ (default 50) and +:offset+ (default 0).
-    def errors (options = {})
+    def errors(options = {})
       limit = options[:limit] ? options[:limit].to_i : 50
       Entry.errors(self, limit, options[:offset].to_i)
     end
@@ -157,7 +157,7 @@ module Sunspot
     private
     
     # Get the class and id for either a record or a hash containing +:class+ and +:id+ options
-    def class_and_id (record_or_hash)
+    def class_and_id(record_or_hash)
       if record_or_hash.is_a?(Hash)
         [record_or_hash[:class], record_or_hash[:id]]
       else

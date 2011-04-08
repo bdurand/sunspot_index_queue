@@ -28,40 +28,40 @@ module Sunspot
         
         class << self
           # Implementation of the total_count method.
-          def total_count (queue)
+          def total_count(queue)
             conditions = queue.class_names.empty? ? {} : {:record_class_name => queue.class_names}
             count(conditions)
           end
           
           # Implementation of the ready_count method.
-          def ready_count (queue)
+          def ready_count(queue)
             conditions = {:run_at.lte => Time.now.utc}
             conditions[:record_class_name] = queue.class_names unless queue.class_names.empty?
             count(conditions)
           end
 
           # Implementation of the error_count method.
-          def error_count (queue)
+          def error_count(queue)
             conditions = {:error.not => nil}
             conditions[:record_class_name] = queue.class_names unless queue.class_names.empty?
             count(conditions)
           end
 
           # Implementation of the errors method.
-          def errors (queue, limit, offset)
+          def errors(queue, limit, offset)
             conditions = {:error.not => nil}
             conditions[:record_class_name] = queue.class_names unless queue.class_names.empty?
             all(conditions.merge(:limit => limit, :offset => offset, :order => :id))
           end
 
           # Implementation of the reset! method.
-          def reset! (queue)
+          def reset!(queue)
             conditions = queue.class_names.empty? ? {} : {:record_class_name => queue.class_names}
             all(conditions).update!(:run_at => Time.now.utc, :attempts => 0, :error => nil, :lock => nil)
           end
           
           # Implementation of the next_batch! method.
-          def next_batch! (queue)
+          def next_batch!(queue)
             conditions = {:run_at.lte => Time.now.utc}
             conditions[:record_class_name] = queue.class_names unless queue.class_names.empty?
             batch_entries = all(conditions.merge(:fields => [:id], :limit => queue.batch_size, :order => [:priority.desc, :run_at]))
@@ -73,7 +73,7 @@ module Sunspot
           end
 
           # Implementation of the add method.
-          def add (klass, id, delete, priority)
+          def add(klass, id, delete, priority)
             queue_entry_key = {:record_id => id, :record_class_name => klass.name, :lock => nil}
             queue_entry = first(:conditions => queue_entry_key) || new(queue_entry_key.merge(:priority => priority))
             queue_entry.is_delete = delete
@@ -83,13 +83,13 @@ module Sunspot
           end
           
           # Implementation of the delete_entries method.
-          def delete_entries (ids)
+          def delete_entries(ids)
             all(:id => ids).destroy!
           end
         end
 
         # Implementation of the set_error! method.
-        def set_error! (error, retry_interval = nil)
+        def set_error!(error, retry_interval = nil)
           self.attempts += 1
           self.run_at = Time.now.utc + (retry_interval * attempts) if retry_interval
           self.error = "#{error.class.name}: #{error.message}\n#{error.backtrace.join("\n")[0, 4000]}"
