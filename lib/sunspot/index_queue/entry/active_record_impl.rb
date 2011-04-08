@@ -92,7 +92,7 @@ module Sunspot
           end
           
           # Implementation of the delete_entries method.
-          def delete_entries(ids)
+          def delete_entries (ids)
             delete_all(:id => ids)
           end
           
