@@ -141,7 +141,7 @@ module Sunspot
           end
           
           # Implementation of the delete_entries method.
-          def delete_entries (entries)
+          def delete_entries(entries)
             collection.remove(:_id => {'$in' => entries.map(&:id)})
           end
         end

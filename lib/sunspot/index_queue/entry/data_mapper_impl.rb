@@ -83,7 +83,7 @@ module Sunspot
           end
           
           # Implementation of the delete_entries method.
-          def delete_entries (entries)
+          def delete_entries(entries)
             all(:id => entries.map(&:id)).destroy!
           end
         end
