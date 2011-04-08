@@ -1,3 +1,9 @@
+1.1.1
+
+- Fix bug where entries were lost if they failed to be submitted individually after they failed to be submitted in a batch.
+
+- Fix compatibility with latest mongo gem.
+
 1.1.0
 
 - Change column type for ActiveRecord and DataMapper implementation queue table for record_id from String to Integer. This makes it far more efficient in the normal case at the expense of being less flexible. If you do end up needing String record id's, just create the table definition yourself. To upgrade, you should clear the queue and then rerun the migration.
