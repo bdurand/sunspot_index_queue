@@ -3,6 +3,10 @@ require 'active_record'
 
 describe "Sunspot::IndexQueue integration tests" do
   before :all do
+    ActiveRecord::Base.establish_connection("adapter" => "sqlite3", "database" => ":memory:")
+    Sunspot::IndexQueue::Entry.implementation = :active_record
+    Sunspot::IndexQueue::Entry::ActiveRecordImpl.create_table
+    
     data_dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
     FileUtils.rm_rf(data_dir) if File.exist?(data_dir)
     Dir.mkdir(data_dir)
@@ -10,7 +14,7 @@ describe "Sunspot::IndexQueue integration tests" do
       `sunspot-solr start --port=18983 --data-directory=. --pid-dir=. --log-file=./solr.log --max-memory=64m`
       raise "Failed to start Solr on port 18983" unless $? == 0
       # Wait until the server is responding
-      ping_uri = URI.parse("http://127.0.0.1:18983/solr/ping")
+      ping_uri = URI.parse("http://127.0.0.1:18983/solr/admin/ping")
       solr_started = false
       100.times do
         begin
@@ -23,10 +27,6 @@ describe "Sunspot::IndexQueue integration tests" do
       end
       raise "Solr failed to start after 10 seconds" unless solr_started
     end
-    ActiveRecord::Base.establish_connection("adapter" => "sqlite3", "database" => ":memory:")
-    Sunspot::IndexQueue::Entry.implementation = :active_record
-    Sunspot::IndexQueue::Entry::ActiveRecordImpl.create_table
-    
     @solr_session = Sunspot::Session.new do |config|
       config.solr.url = 'http://127.0.0.1:18983/solr'
     end
@@ -40,7 +40,7 @@ describe "Sunspot::IndexQueue integration tests" do
       end
       FileUtils.rm_rf(data_dir)
     end
-    Sunspot::IndexQueue::Entry::ActiveRecordImpl.connection.drop_table(Sunspot::IndexQueue::Entry::ActiveRecordImpl.table_name)
+    Sunspot::IndexQueue::Entry::ActiveRecordImpl.connection.drop_table(Sunspot::IndexQueue::Entry::ActiveRecordImpl.table_name) if Sunspot::IndexQueue::Entry::ActiveRecordImpl.table_exists?
     ActiveRecord::Base.connection.disconnect!
     Sunspot::IndexQueue::Entry.implementation = nil
   end

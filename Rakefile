@@ -6,18 +6,17 @@ desc 'Default: run unit tests.'
 task :default => :test
 
 begin
-  require 'spec/rake/spectask'
-  desc 'Test the gem.'
-  Spec::Rake::SpecTask.new(:test) do |t|
-    t.spec_files = FileList.new('spec/**/*_spec.rb')
-  end
+  require 'rspec'
+  require 'rspec/core/rake_task'
+  desc 'Run the unit tests'
+  RSpec::Core::RakeTask.new(:test)
 rescue LoadError
   task :test do
-    STDERR.puts "You must have rspec >= 1.3.0 to run the tests"
+    STDERR.puts "You must have rspec 2.0 installed to run the tests"
   end
 end
 
-desc 'Generate documentation for sunspot_index_queue.'
+desc 'Generate documentation.'
 Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
   rdoc.options << '--title' << 'Sunspot Index Queue' << '--line-numbers' << '--inline-source' << '--main' << 'README.rdoc'
@@ -34,7 +33,7 @@ begin
     gem.email = "brian@embellishedvisions.com"
     gem.homepage = "http://github.com/bdurand/sunspot_index_queue"
     gem.authors = ["Brian Durand"]
-    gem.rdoc_options = ["--charset=UTF-8", "--main", "README.rdoc"]
+    gem.rdoc_options = ["--charset=UTF-8", "--main", "README.rdoc", "MIT_LICENSE"]
     
     gem.add_dependency('sunspot', '>= 1.1.0')
     gem.add_development_dependency('sqlite3')
@@ -43,7 +42,7 @@ begin
     gem.add_development_dependency('dm-aggregates', '>=1.0.0')
     gem.add_development_dependency('dm-migrations', '>=1.0.0')
     gem.add_development_dependency('mongo')
-    gem.add_development_dependency('rspec', '>= 1.3.0')
+    gem.add_development_dependency('rspec', '>= 2.0.0')
     gem.add_development_dependency('jeweler')
   end
 

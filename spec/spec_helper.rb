@@ -1,5 +1,9 @@
 require 'rubygems'
 
+require 'uri'
+require 'fileutils'
+require 'net/http'
+
 if ENV["ACTIVE_RECORD_VERSION"]
   gem 'activerecord', ENV["ACTIVE_RECORD_VERSION"]
 else
@@ -109,6 +113,10 @@ module Sunspot
         
         def id
           object_id
+        end
+        
+        def set_error!(message, retry_interval = nil)
+          @error = message
         end
       end
     end
