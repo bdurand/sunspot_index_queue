@@ -32,6 +32,8 @@ module Sunspot
           end
           commit!
         rescue Exception => e
+          @delete_entries.clear
+          entries.each{|entry| entry.processed = false}
           if PASS_THROUGH_EXCEPTIONS.include?(e.class)
             raise e
           else
@@ -66,8 +68,9 @@ module Sunspot
         Entry.delete_entries(@delete_entries) unless @delete_entries.empty?
       rescue Exception => e
         clear_processed(entries)
-        @delete_entries.clear
         raise e
+      ensure
+        @delete_entries.clear
       end
       
       # Submit all entries to Solr individually and then commit.

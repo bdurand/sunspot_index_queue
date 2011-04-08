@@ -43,6 +43,22 @@ describe Sunspot::IndexQueue::Batch do
     entry_2.processed?.should == true
   end
   
+  it "should only delete entries that are successfully committed" do
+    entry_1.stub!(:record).and_return(record_1)
+    def session.batch
+      yield
+      raise("solr rejects malformed batch")
+    end
+    session.should_receive(:index).with(record_1).twice
+    session.should_receive(:remove_by_id).with(entry_2.record_class_name, entry_2.record_id)
+    session.should_receive(:remove_by_id).with(entry_2.record_class_name, entry_2.record_id).and_raise("boom")
+    session.should_receive(:commit)
+    Sunspot::IndexQueue::Entry.implementation.should_receive(:delete_entries).with([entry_1])
+    subject.submit!
+    entry_1.processed?.should == true
+    entry_2.processed?.should == false
+    entry_2.error.should_not == nil
+  end
   
   it "should add error messages to each entry that errors out" do
     entry_1.stub!(:record).and_return(record_1)
