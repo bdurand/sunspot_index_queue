@@ -1,3 +1,7 @@
+1.1.2
+
+- Optimization for ActiveRecord to eager load includes declared in sunspot_options for indexing.
+
 1.1.1
 
 - Fix bug where entries were lost if they failed to be submitted individually after they failed to be submitted in a batch.

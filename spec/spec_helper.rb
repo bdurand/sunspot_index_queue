@@ -81,10 +81,22 @@ module Sunspot
         
         class Subclass < Searchable
         end
+        
+        # This class mocks out the behavior of ActiveRecord DataAccessor where an include can be attached for eager loading.
+        class IncludeClass < Searchable
+          def self.sunspot_options
+            {:include => :test}
+          end
+          
+          class IncludeDataAccessor < DataAccessor
+            attr_accessor :include
+          end
+        end
       end
 
       Sunspot::Adapters::InstanceAdapter.register(Searchable::InstanceAdapter, Searchable)
       Sunspot::Adapters::DataAccessor.register(Searchable::DataAccessor, Searchable)
+      Sunspot::Adapters::DataAccessor.register(Searchable::IncludeClass::IncludeDataAccessor, Searchable::IncludeClass)
       Sunspot.setup(Searchable) do
         string :value
       end

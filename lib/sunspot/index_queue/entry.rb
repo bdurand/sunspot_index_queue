@@ -99,14 +99,16 @@ module Sunspot
         end
         
         # Load all records in an array of entries. This can be faster than calling load on each DataAccessor
-        # depending on them implementation
+        # depending on the implementation
         def load_all_records(entries)
           classes = entries.collect{|entry| entry.record_class_name}.uniq.collect{|name| Sunspot::Util.full_const_get(name) rescue nil}.compact
           map = entries.inject({}){|hash, entry| hash[entry.record_id.to_s] = entry; hash}
           classes.each do |klass|
             ids = entries.collect{|entry| entry.record_id}
             adapter = Sunspot::Adapters::DataAccessor.create(klass)
-            adapter.include = klass.sunspot_options[:include]
+            if klass.respond_to?(:sunspot_options) && klass.sunspot_options && klass.sunspot_options[:include] && adapter.respond_to?(:include=)
+              adapter.include = klass.sunspot_options[:include]
+            end
             adapter.load_all(ids).each do |record|
               entry = map[Sunspot::Adapters::InstanceAdapter.adapt(record).id.to_s]
               entry.instance_variable_set(:@record, record) if entry
