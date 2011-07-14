@@ -70,6 +70,7 @@ module Sunspot
           def next_batch!(queue)
             conditions = ["#{connection.quote_column_name('run_at')} <= ?", Time.now.utc]
             classes = group(:record_class_name).map{|g| g.record_class_name}.compact
+            return [] unless classes.length > 0
             classes = classes.map{|u| u if queue.class_names.include?(u)}.compact unless queue.class_names.empty?
             if classes
               conditions.first << " AND #{connection.quote_column_name('record_class_name')} IN (?)"
