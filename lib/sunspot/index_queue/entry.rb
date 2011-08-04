@@ -9,7 +9,7 @@ module Sunspot
       autoload :ActiveRecordImpl, File.expand_path('../entry/active_record_impl', __FILE__)
       autoload :DataMapperImpl, File.expand_path('../entry/data_mapper_impl', __FILE__)
       autoload :MongoImpl, File.expand_path('../entry/mongo_impl', __FILE__)
-      
+      autoload :RedisImpl, File.expand_path('../entry/redis_impl', __FILE__)
       attr_writer :processed
 
       class << self

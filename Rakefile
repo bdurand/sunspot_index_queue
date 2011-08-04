@@ -36,6 +36,7 @@ begin
     gem.add_development_dependency('mongo')
     gem.add_development_dependency('rspec', '>= 2.0.0')
     gem.add_development_dependency('jeweler')
+    gem.add_development_dependency('redis')
   end
 
   Jeweler::GemcutterTasks.new
