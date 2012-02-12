@@ -22,18 +22,18 @@ module Sunspot
           def connection=(*args)
             @connection = args.first.is_a?(Mongo::Connection) ? args.first : Mongo::Connection.new(*args)
           end
-          
+
           # Get the connection currently in use.
           def connection
             @connection
           end
-          
+
           # Set the name of the database which will contain the queue collection.
           def database_name=(name)
             @collection = nil
             @database_name = name
           end
-          
+
           # Get the collection used to store the queue.
           def collection
             unless @collection
@@ -43,41 +43,41 @@ module Sunspot
             end
             @collection
           end
-          
+
           # Create a new entry.
           def create(attributes)
             entry = new(attributes)
             entry.save
             entry
           end
-          
+
           # Find one entry given a selector or object id.
           def find_one(spec_or_object_id=nil, opts={})
             doc = collection.find_one(spec_or_object_id, opts)
             doc ? new(doc) : nil
           end
-          
+
           # Find an array of entries given a selector.
           def find(selector={}, opts={})
             collection.find(selector, opts).collect{|doc| new(doc)}
           end
-          
+
           # Logger used to log errors.
           def logger
             @logger
           end
-          
+
           # Set the logger used to log errors.
           def logger=(logger)
             @logger = logger
           end
-          
+
           # Implementation of the total_count method.
           def total_count(queue)
             conditions = queue.class_names.empty? ? {} : {:record_class_name => {'$in' => queue.class_names}}
             collection.find(conditions).count
           end
-          
+
           # Implementation of the ready_count method.
           def ready_count(queue)
             conditions = {:run_at => {'$lte' => Time.now.utc}}
@@ -110,7 +110,7 @@ module Sunspot
             conditions = queue.class_names.empty? ? {} : {:record_class_name => {'$in' => queue.class_names}}
             collection.update(conditions, {"$set" => {:run_at => Time.now.utc, :attempts => 0, :error => nil}}, :multi => true)
           end
-          
+
           # Implementation of the next_batch! method.
           def next_batch!(queue)
             conditions = {:run_at => {'$lte' => Time.now.utc}}
@@ -122,6 +122,7 @@ module Sunspot
               begin
                 lock = rand(0x7FFFFFFF)
                 doc = collection.find_and_modify(:update => {"$set" => {:run_at => Time.now.utc + queue.retry_interval, :error => nil, :lock => lock}}, :query => conditions, :limit => queue.batch_size, :sort => [[:priority, Mongo::DESCENDING], [:run_at, Mongo::ASCENDING]])
+                break unless doc
                 entries << new(doc)
               rescue Mongo::OperationFailure
                 break
@@ -139,15 +140,15 @@ module Sunspot
             queue_entry.run_at = Time.now.utc
             queue_entry.save
           end
-          
+
           # Implementation of the delete_entries method.
           def delete_entries(entries)
             collection.remove(:_id => {'$in' => entries.map(&:id)})
           end
         end
-        
+
         attr_reader :doc
-        
+
         # Create a new entry from a document hash.
         def initialize(attributes = {})
           @doc = {}
@@ -157,83 +158,83 @@ module Sunspot
           @doc['priority'] = 0 unless doc['priority']
           @doc['attempts'] = 0 unless doc['attempts']
         end
-        
+
         # Get the entry id.
         def id
           doc['_id']
         end
-        
+
         # Get the entry id.
         def record_class_name
           doc['record_class_name']
         end
-        
+
         # Set the entry record_class_name.
         def record_class_name=(value)
           doc['record_class_name'] =  value.nil? ? nil : value.to_s
         end
-        
+
         # Get the entry id.
         def record_id
           doc['record_id']
         end
-        
+
         # Set the entry record_id.
         def record_id=(value)
           doc['record_id'] =  value
         end
-        
+
         # Get the entry run_at time.
         def run_at
           doc['run_at']
         end
-        
+
         # Set the entry run_at time.
         def run_at=(value)
           value = Time.parse(value.to_s) unless value.nil? || value.is_a?(Time)
           doc['run_at'] =  value.nil? ? nil : value.utc
         end
-        
+
         # Get the entry priority.
         def priority
           doc['priority']
         end
-        
+
         # Set the entry priority.
         def priority=(value)
           doc['priority'] =  value.to_i
         end
-        
+
         # Get the entry attempts.
         def attempts
           doc['attempts'] || 0
         end
-        
+
         # Set the entry attempts.
         def attempts=(value)
           doc['attempts'] =  value.to_i
         end
-        
+
         # Get the entry error.
         def error
           doc['error']
         end
-        
+
         # Set the entry error.
         def error=(value)
           doc['error'] =  value.nil? ? nil : value.to_s
         end
-        
+
         # Get the entry delete entry flag.
         def is_delete?
           doc['is_delete']
         end
-        
+
         # Set the entry delete entry flag.
         def is_delete=(value)
           doc['is_delete'] =  !!value
         end
-        
+
         # Save the entry to the database.
         def save
           id = self.class.collection.save(doc)
@@ -266,7 +267,7 @@ module Sunspot
             self.class.logger.warn(e) if self.class.logger
           end
         end
-        
+
         def == (value)
           value.is_a?(self.class) && ((id && id == value.id) || (doc == value.doc))
         end
