@@ -1,6 +1,5 @@
 require 'rubygems'
 require 'rake'
-require 'rake/rdoctask'
 
 desc 'Default: run unit tests.'
 task :default => :test
@@ -16,20 +15,12 @@ rescue LoadError
   end
 end
 
-desc 'Generate documentation.'
-Rake::RDocTask.new(:rdoc) do |rdoc|
-  rdoc.rdoc_dir = 'rdoc'
-  rdoc.options << '--title' << 'Sunspot Index Queue' << '--line-numbers' << '--inline-source' << '--main' << 'README.rdoc'
-  rdoc.rdoc_files.include('README.rdoc')
-  rdoc.rdoc_files.include('lib/**/*.rb')
-end
-
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "sunspot_index_queue"
     gem.summary = %Q{Asynchronous Solr indexing support for the sunspot gem with an emphasis on reliablity and throughput.}
-    gem.description = %Q(This gem provides asynchronous indexing to Solr for the sunspot gem. It uses a pluggable model for the backing queue and provides support for ActiveRecord and MongoDB out of the box.)
+    gem.description = %Q(This gem provides asynchronous indexing to Solr for the sunspot gem. It uses a pluggable model for the backing queue and provides support for ActiveRecord, DataMapper, and MongoDB out of the box.)
     gem.email = "brian@embellishedvisions.com"
     gem.homepage = "http://github.com/bdurand/sunspot_index_queue"
     gem.authors = ["Brian Durand"]
@@ -41,6 +32,7 @@ begin
     gem.add_development_dependency('dm-core', '>= 1.0.0')
     gem.add_development_dependency('dm-aggregates', '>=1.0.0')
     gem.add_development_dependency('dm-migrations', '>=1.0.0')
+    gem.add_development_dependency('dm-sqlite-adapter', '>=1.0.0')
     gem.add_development_dependency('mongo')
     gem.add_development_dependency('rspec', '>= 2.0.0')
     gem.add_development_dependency('jeweler')
