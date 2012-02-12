@@ -5,17 +5,18 @@
 
 Gem::Specification.new do |s|
   s.name = %q{sunspot_index_queue}
-  s.version = "1.1.2"
+  s.version = "1.1.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
-  s.date = %q{2011-06-23}
-  s.description = %q{This gem provides asynchronous indexing to Solr for the sunspot gem. It uses a pluggable model for the backing queue and provides support for ActiveRecord and MongoDB out of the box.}
+  s.date = %q{2012-02-12}
+  s.description = %q{This gem provides asynchronous indexing to Solr for the sunspot gem. It uses a pluggable model for the backing queue and provides support for ActiveRecord, DataMapper, and MongoDB out of the box.}
   s.email = %q{brian@embellishedvisions.com}
   s.extra_rdoc_files = [
     "README.rdoc"
   ]
   s.files = [
+    ".travis.yml",
     "CHANGE_LOG.txt",
     "MIT_LICENSE",
     "README.rdoc",
@@ -57,6 +58,7 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<dm-core>, [">= 1.0.0"])
       s.add_development_dependency(%q<dm-aggregates>, [">= 1.0.0"])
       s.add_development_dependency(%q<dm-migrations>, [">= 1.0.0"])
+      s.add_development_dependency(%q<dm-sqlite-adapter>, [">= 1.0.0"])
       s.add_development_dependency(%q<mongo>, [">= 0"])
       s.add_development_dependency(%q<rspec>, [">= 2.0.0"])
       s.add_development_dependency(%q<jeweler>, [">= 0"])
@@ -67,6 +69,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<dm-core>, [">= 1.0.0"])
       s.add_dependency(%q<dm-aggregates>, [">= 1.0.0"])
       s.add_dependency(%q<dm-migrations>, [">= 1.0.0"])
+      s.add_dependency(%q<dm-sqlite-adapter>, [">= 1.0.0"])
       s.add_dependency(%q<mongo>, [">= 0"])
       s.add_dependency(%q<rspec>, [">= 2.0.0"])
       s.add_dependency(%q<jeweler>, [">= 0"])
@@ -78,6 +81,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<dm-core>, [">= 1.0.0"])
     s.add_dependency(%q<dm-aggregates>, [">= 1.0.0"])
     s.add_dependency(%q<dm-migrations>, [">= 1.0.0"])
+    s.add_dependency(%q<dm-sqlite-adapter>, [">= 1.0.0"])
     s.add_dependency(%q<mongo>, [">= 0"])
     s.add_dependency(%q<rspec>, [">= 2.0.0"])
     s.add_dependency(%q<jeweler>, [">= 0"])
