@@ -1,3 +1,7 @@
+1.1.3
+
+- Fix mongo implementation to work properly with most recent versions.
+
 1.1.2
 
 - Optimization for ActiveRecord to eager load includes declared in sunspot_options for indexing.
