@@ -109,6 +109,7 @@ module Sunspot
             if klass.respond_to?(:sunspot_options) && klass.sunspot_options && klass.sunspot_options[:include] && adapter.respond_to?(:include=)
               adapter.include = klass.sunspot_options[:include]
             end
+            ids.map! {|id| id.to_s } if adapter.class.name == "Sunspot::Mongoid::DataAccessor"
             adapter.load_all(ids).each do |record|
               entry = map[Sunspot::Adapters::InstanceAdapter.adapt(record).id.to_s]
               entry.instance_variable_set(:@record, record) if entry
