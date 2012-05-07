@@ -21,7 +21,7 @@ module Sunspot
       class ActiveRecordImpl < ActiveRecord::Base
         include Entry
         
-        set_table_name :sunspot_index_queue_entries
+        self.table_name = "sunspot_index_queue_entries"
 
         class << self
           # Implementation of the total_count method.
