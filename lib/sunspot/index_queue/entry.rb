@@ -101,20 +101,27 @@ module Sunspot
         # Load all records in an array of entries. This can be faster than calling load on each DataAccessor
         # depending on the implementation
         def load_all_records(entries)
-          classes = entries.collect{|entry| entry.record_class_name}.uniq.collect{|name| Sunspot::Util.full_const_get(name) rescue nil}.compact
-          map = entries.inject({}){|hash, entry| hash[entry.record_id.to_s] = entry; hash}
-          classes.each do |klass|
-            ids = entries.collect{|entry| entry.record_id}
+          #First create maps for classes => ids and  "Classname id" => entry
+          class_id_map = {}
+          entry_map = {}
+          entries.each do |entry|
+            classname = Sunspot::Util.full_const_get(entry.record_class_name)
+            class_id_map[classname] = [] if class_id_map[classname].nil?
+            class_id_map[classname] << entry.record_id
+            entry_map["#{classname} #{entry.record_id}"] = entry
+          end
+          class_id_map.each do |klass, ids|
             adapter = Sunspot::Adapters::DataAccessor.create(klass)
             if klass.respond_to?(:sunspot_options) && klass.sunspot_options && klass.sunspot_options[:include] && adapter.respond_to?(:include=)
               adapter.include = klass.sunspot_options[:include]
             end
             adapter.load_all(ids).each do |record|
-              entry = map[Sunspot::Adapters::InstanceAdapter.adapt(record).id.to_s]
+              entry = entry_map["#{klass} #{Sunspot::Adapters::InstanceAdapter.adapt(record).id}"]
               entry.instance_variable_set(:@record, record) if entry
             end
           end
         end
+        
       end
       
       def processed?
