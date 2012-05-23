@@ -1,5 +1,9 @@
 require 'redis'
-require 'json'
+begin
+  require 'yajl/json_gem'
+rescue LoadError
+  require 'json'
+end
 
 module Sunspot
   class IndexQueue
@@ -10,7 +14,6 @@ module Sunspot
         attr_accessor :record_id, :record_class_name, :is_delete, :run_at, :priority, :error, :attempts, :is_locked, :duplicate
 
         class << self
-
           def connection= (*args)
             host, port = *args
             host ||= 'localhost'
@@ -113,7 +116,7 @@ module Sunspot
             sliced_object_array
           end
 
-          def add (klass, id, delete, priority)
+          def add(klass, id, delete, priority)
             redis_object = if @connection.hexists(@datastore_name, "#{klass.name}_#{id}") && !find_entry("#{klass.name}_#{id}").is_locked
                              find_entry("#{klass.name}_#{id}")
                            else
@@ -151,7 +154,6 @@ module Sunspot
             @connection.hexists(@datastore_name, id) ?
             new(JSON.parse(@connection.hget(@datastore_name, id))) : nil
           end
-
         end
 
         def initialize(options = {})
@@ -166,8 +168,8 @@ module Sunspot
         end
 
         def json_formatted
-          {"record_id" => self.record_id, "record_class_name" => self.record_class_name, "is_delete" => self.is_delete, "duplicate" => self.duplicate,
-           "run_at" => self.run_at, "priority" => self.priority, "error" => self.error, "attempts" => self.attempts, "is_locked" => self.is_locked}.to_json
+          JSON.dump("record_id" => self.record_id, "record_class_name" => self.record_class_name, "is_delete" => self.is_delete, "duplicate" => self.duplicate,
+           "run_at" => self.run_at, "priority" => self.priority, "error" => self.error, "attempts" => self.attempts, "is_locked" => self.is_locked)
         end
 
         def set_error! (error, retry_interval = nil)
@@ -183,7 +185,6 @@ module Sunspot
             end
           end
         end
-
 
         def reset!
           begin
@@ -209,7 +210,6 @@ module Sunspot
         def <=> (redis_object)
           priority.nil? ? (redis_object.run_at <=> self.run_at) : (redis_object.priority <=> self.priority)
         end
-
       end
     end
   end
