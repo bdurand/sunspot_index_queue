@@ -176,7 +176,8 @@ module Sunspot
 
         # Get the entry id.
         def record_id
-          doc['record_id']
+          r_id = doc['record_id']
+          r_id.to_s if r_id
         end
 
         # Set the entry record_id.
