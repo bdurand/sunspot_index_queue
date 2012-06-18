@@ -110,7 +110,7 @@ shared_examples_for "Entry implementation" do
         Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, 10, false, 100)
         entry = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new).detect{|e| e.priority == 100}
         entry.record_class_name.should == "Sunspot::IndexQueue::Test::Searchable"
-        entry.record_id.to_i.should == 10
+        entry.record_id.should == 10
         entry.is_delete?.should == false
         entry.priority.should == 100
       end
@@ -130,7 +130,7 @@ shared_examples_for "Entry implementation" do
         Sunspot::IndexQueue::Entry.implementation.add(Sunspot::IndexQueue::Test::Searchable, 10, true, 90)
         Sunspot::IndexQueue::Entry.implementation.reset!(Sunspot::IndexQueue.new)
         entries = Sunspot::IndexQueue::Entry.implementation.next_batch!(Sunspot::IndexQueue.new)
-        entries.detect{|e| e.priority == 80}.record_id.to_i.should == 10
+        entries.detect{|e| e.priority == 80}.record_id.should == 10
         entries.detect{|e| e.priority == 100}.should == nil
         entries.detect{|e| e.priority == 90}.should == nil
         entry = entries.detect{|e| e.priority == 110}
@@ -148,7 +148,7 @@ shared_examples_for "Entry implementation" do
   
     it "should get the record_id" do
       entry = Sunspot::IndexQueue::Entry.implementation.new('record_id' => 1)
-      entry.record_id.to_i.should == 1
+      entry.record_id.should == 1
     end
   
     it "should determine if the entry is an delete" do
