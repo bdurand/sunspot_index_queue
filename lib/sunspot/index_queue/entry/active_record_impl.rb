@@ -21,6 +21,8 @@ module Sunspot
       class ActiveRecordImpl < ActiveRecord::Base
         include Entry
         
+        attr_accessible :record_id, :record_class_name, :lock, :priority
+        
         self.table_name = "sunspot_index_queue_entries"
 
         class << self
