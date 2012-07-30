@@ -20,9 +20,16 @@ module Sunspot
       # as the primary key, you can add additional statements to the migration to do so.
       class ActiveRecordImpl < ActiveRecord::Base
         include Entry
-        
-        attr_accessible :record_id, :record_class_name, :lock, :priority
-        
+
+        attr_accessible :attempts,
+                        :error,
+                        :is_delete,
+                        :lock,
+                        :priority,
+                        :record_class_name,
+                        :record_id,
+                        :run_at
+
         self.table_name = "sunspot_index_queue_entries"
 
         class << self
