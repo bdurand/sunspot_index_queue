@@ -41,7 +41,7 @@ If you have custom configuration settings for your Solr session or need to wrap 
   master_session = Sunspot::Session.new{|config| config.solr.url = 'http://master.solr.example.com/solr'}
   slave_session = Sunspot::Session.new{|config| config.solr.url = 'http://slave01.solr.example.com/solr'}
   master_slave_session = Sunspot::SessionProxy::MasterSlaveSessionProxy(master_session, slave_session)
-  queue = Sunspot::IndexQueue.new(master_slave_session)
+  queue = Sunspot::IndexQueue.new(:session => master_slave_session)
   Sunspot.session = Sunspot::IndexQueue::SessionProxy.new(queue)
 
 === Queue Implementation
