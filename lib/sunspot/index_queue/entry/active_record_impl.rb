@@ -77,7 +77,7 @@ module Sunspot
             queue_entry_ids = batch_entries.collect{|entry| entry.id}
             return [] if queue_entry_ids.empty?
             lock = rand(0x7FFFFFFF)
-            where(:id => queue_entry_ids).update_all(:run_at => queue.retry_interval.from_now.utc, :lock => lock, :error => nil)
+            where(:id => queue_entry_ids).update_all(:run_at => queue.retry_interval.seconds.from_now.utc, :lock => lock, :error => nil)
             where(:id => queue_entry_ids, :lock => lock).to_a
           end
 
