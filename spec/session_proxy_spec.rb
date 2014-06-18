@@ -90,13 +90,13 @@ describe Sunspot::IndexQueue::SessionProxy do
     end
     
     it "should not mark deletes as dirty" do
-      Sunspot::IndexQueue::Entry.implementation.stub!(:add)
+      Sunspot::IndexQueue::Entry.implementation.stub(:add)
       subject.remove(Sunspot::IndexQueue::Test::Searchable.new(1))
       subject.delete_dirty?.should == false
     end
     
     it "should not mark the session as dirty" do
-      Sunspot::IndexQueue::Entry.implementation.stub!(:add)
+      Sunspot::IndexQueue::Entry.implementation.stub(:add)
       subject.index(Sunspot::IndexQueue::Test::Searchable.new(1))
       subject.delete_dirty?.should == false
     end

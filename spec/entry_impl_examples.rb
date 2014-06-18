@@ -172,7 +172,7 @@ shared_examples_for "Entry implementation" do
     it "should set the error on an entry" do
       entry = factory.create('record_class_name' => "Test", 'record_id' => 1, 'is_delete' => false, 'priority' => 10, 'run_at' => Time.now.utc + 600, 'attempts' => 1)
       error = ArgumentError.new("boom")
-      error.stub!(:backtrace).and_return(["line 1", "line 2"])
+      error.stub(:backtrace).and_return(["line 1", "line 2"])
       entry.set_error!(error)
       entry = factory.find(entry.id)
       entry.error.should include("ArgumentError")

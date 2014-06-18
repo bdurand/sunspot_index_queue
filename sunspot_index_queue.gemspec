@@ -56,7 +56,7 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<sunspot>, [">= 1.1.0"])
       s.add_development_dependency(%q<sqlite3>, [">= 0"])
-      s.add_development_dependency(%q<activerecord>, [">= 2.2"])
+      s.add_development_dependency(%q<activerecord>, "~>4.0.0")
       s.add_development_dependency(%q<dm-core>, [">= 1.0.0"])
       s.add_development_dependency(%q<dm-aggregates>, [">= 1.0.0"])
       s.add_development_dependency(%q<dm-migrations>, [">= 1.0.0"])
@@ -68,7 +68,7 @@ Gem::Specification.new do |s|
     else
       s.add_dependency(%q<sunspot>, [">= 1.1.0"])
       s.add_dependency(%q<sqlite3>, [">= 0"])
-      s.add_dependency(%q<activerecord>, [">= 2.2"])
+      s.add_dependency(%q<activerecord>, "~>4.0.0")
       s.add_dependency(%q<dm-core>, [">= 1.0.0"])
       s.add_dependency(%q<dm-aggregates>, [">= 1.0.0"])
       s.add_dependency(%q<dm-migrations>, [">= 1.0.0"])
@@ -81,7 +81,7 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<sunspot>, [">= 1.1.0"])
     s.add_dependency(%q<sqlite3>, [">= 0"])
-    s.add_dependency(%q<activerecord>, [">= 2.2"])
+    s.add_dependency(%q<activerecord>, "~>4.0.0")
     s.add_dependency(%q<dm-core>, [">= 1.0.0"])
     s.add_dependency(%q<dm-aggregates>, [">= 1.0.0"])
     s.add_dependency(%q<dm-migrations>, [">= 1.0.0"])
