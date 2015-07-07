@@ -19,7 +19,7 @@ describe Sunspot::IndexQueue::Batch do
   let(:session) { Sunspot::Session.new }
   
   it "should submit all entries in a batch to Solr and commit them" do
-    entry_1.stub!(:record).and_return(record_1)
+    entry_1.stub(:record).and_return(record_1)
     session.should_receive(:batch).and_yield
     session.should_receive(:index).with(record_1)
     session.should_receive(:remove_by_id).with(entry_2.record_class_name, entry_2.record_id)
@@ -33,7 +33,7 @@ describe Sunspot::IndexQueue::Batch do
   it "should submit all entries in a batch to Solr using include options if they are supported on the model and data adapters" do
     record = Sunspot::IndexQueue::Test::Searchable::IncludeClass.new(1)
     entry = Sunspot::IndexQueue::Entry::MockImpl.new(:record => record, :delete => false)
-    entry.stub!(:record).and_return(record)
+    entry.stub(:record).and_return(record)
     session.should_receive(:batch).and_yield
     session.should_receive(:index).with(record)
     session.should_receive(:commit)
@@ -46,7 +46,7 @@ describe Sunspot::IndexQueue::Batch do
   end
   
   it "should submit all entries individually and commit them if the batch errors out" do
-    entry_1.stub!(:record).and_return(record_1)
+    entry_1.stub(:record).and_return(record_1)
     session.should_receive(:batch).and_yield
     session.should_receive(:index).with(record_1).twice
     session.should_receive(:remove_by_id).with(entry_2.record_class_name, entry_2.record_id).twice
@@ -59,7 +59,7 @@ describe Sunspot::IndexQueue::Batch do
   end
   
   it "should only delete entries that are successfully committed" do
-    entry_1.stub!(:record).and_return(record_1)
+    entry_1.stub(:record).and_return(record_1)
     def session.batch
       yield
       raise("solr rejects malformed batch")
@@ -76,7 +76,7 @@ describe Sunspot::IndexQueue::Batch do
   end
   
   it "should add error messages to each entry that errors out" do
-    entry_1.stub!(:record).and_return(record_1)
+    entry_1.stub(:record).and_return(record_1)
     error = StandardError.new("boom")
     session.should_receive(:batch).and_yield
     session.should_receive(:index).and_raise(error)
@@ -90,7 +90,7 @@ describe Sunspot::IndexQueue::Batch do
   end
   
   it "should add error messages to all entries when a commit fails" do
-    entry_1.stub!(:record).and_return(record_1)
+    entry_1.stub(:record).and_return(record_1)
     error = StandardError.new("boom")
     session.should_receive(:batch).and_yield
     session.should_receive(:index).with(record_1).twice
@@ -105,7 +105,7 @@ describe Sunspot::IndexQueue::Batch do
   end
   
   it "should silently ignore entries that no longer have a record" do
-    entry_1.stub!(:record).and_return(nil)
+    entry_1.stub(:record).and_return(nil)
     session.should_receive(:batch).and_yield
     session.should_not_receive(:index)
     session.should_receive(:remove_by_id).with(entry_2.record_class_name, entry_2.record_id)
@@ -117,7 +117,7 @@ describe Sunspot::IndexQueue::Batch do
   end
   
   it "should raise an error and reset entries if the Solr server is not responding for an entry" do
-    entry_1.stub!(:record).and_return(record_1)
+    entry_1.stub(:record).and_return(record_1)
     error = Errno::ECONNREFUSED.new
     session.should_receive(:batch).and_yield
     session.should_receive(:index).with(record_1)
@@ -132,7 +132,7 @@ describe Sunspot::IndexQueue::Batch do
   end
   
   it "should raise an error and reset entries if the Solr server is not responding on a commit" do
-    entry_1.stub!(:record).and_return(record_1)
+    entry_1.stub(:record).and_return(record_1)
     error = Errno::ECONNREFUSED.new
     session.should_receive(:batch).and_yield
     session.should_receive(:index).with(record_1)

@@ -4,6 +4,15 @@ require 'uri'
 require 'fileutils'
 require 'net/http'
 
+RSpec.configure do |config|
+  # These two settings work together to allow you to limit a spec run
+  # to individual examples or groups you care about by tagging them with
+  # `:focus` metadata. When nothing is tagged with `:focus`, all examples
+  # get run.
+  config.filter_run :focus
+  config.run_all_when_everything_filtered = true
+end
+
 if ENV["ACTIVE_RECORD_VERSION"]
   gem 'activerecord', ENV["ACTIVE_RECORD_VERSION"]
 else
@@ -27,7 +36,7 @@ require File.expand_path('../../lib/sunspot_index_queue', __FILE__)
 module Sunspot
   class IndexQueue
     module Test
-      # Test class for searching against. 
+      # Test class for searching against.
       class Searchable
         class << self
           # Create a mock database in a block that will reload copies of saved objects.
@@ -40,34 +49,34 @@ module Sunspot
               Thread.current[:mock_db] = save
             end
           end
-          
+
           def db
             Thread.current[:mock_db]
           end
-          
+
           def save(*objects)
             objects.each do |obj|
               db[obj.id.to_s] = obj.dup
             end
           end
         end
-        
+
         attr_reader :id
         attr_accessor :value
         def initialize(id, value=nil)
           @id = id
           @value = value
         end
-        
+
         def ==(value)
           value.is_a?(self.class) && @id == value.id
         end
-        
+
         class DataAccessor < Sunspot::Adapters::DataAccessor
           def load(id)
             Searchable.db ? Searchable.db[id.to_s] : Searchable.new(id)
           end
-          
+
           def load_all(ids)
             ids.collect{|id| load(id)}.compact
           end
@@ -78,16 +87,16 @@ module Sunspot
             @instance.id
           end
         end
-        
+
         class Subclass < Searchable
         end
-        
+
         # This class mocks out the behavior of ActiveRecord DataAccessor where an include can be attached for eager loading.
         class IncludeClass < Searchable
           def self.sunspot_options
             {:include => :test}
           end
-          
+
           class IncludeDataAccessor < DataAccessor
             attr_accessor :include
           end
@@ -101,13 +110,13 @@ module Sunspot
         string :value
       end
     end
-    
+
     module Entry
       class MockImpl
         include Entry
-        
+
         attr_reader :record_class_name, :record_id, :error, :attempts
-        
+
         def initialize(options = {})
           if options[:record]
             @record_class_name = options[:record].class.name
@@ -118,15 +127,15 @@ module Sunspot
           end
           @is_delete = !!options[:delete]
         end
-        
+
         def is_delete?
           @is_delete
         end
-        
+
         def id
           object_id
         end
-        
+
         def set_error!(message, retry_interval = nil)
           @error = message
         end
